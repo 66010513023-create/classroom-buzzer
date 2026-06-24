@@ -19,6 +19,12 @@
   <!-- Canvas Confetti for Celebration -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+  <!-- MQTT.js Client for Zero-Config Real-time communication -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+
+  <!-- QRCode.js Library for Automatic Student Joining -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <style>
     body {
       font-family: 'Prompt', 'Kanit', sans-serif;
@@ -62,6 +68,15 @@
     .pulse-ring-effect {
       animation: pulse-ring 2s infinite ease-in-out;
     }
+    
+    /* Subtle Bounce for Rank Cards */
+    @keyframes bounce-subtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .animate-bounce-subtle {
+      animation: bounce-subtle 2.5s infinite ease-in-out;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 min-h-screen text-white flex flex-col justify-between overflow-x-hidden">
@@ -80,90 +95,14 @@
         <p class="text-[10px] text-purple-200 tracking-wider uppercase">ระบบกระดิ่งตอบคำถามอัจฉริยะ</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <!-- Settings Change Button -->
-      <button id="btn-open-settings" class="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all hidden" title="ตั้งค่าการเชื่อมต่อ">
-        <i data-lucide="settings" class="w-4 h-4"></i>
-      </button>
-      <div id="header-connection-status" class="flex items-center gap-2 bg-yellow-400/20 text-yellow-300 px-3 py-1.5 rounded-full text-xs">
-        <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-ping"></span>
-        <span class="text-gray-300">กำลังตรวจสอบระบบ...</span>
-      </div>
+    <div id="header-connection-status" class="flex items-center gap-2 bg-yellow-400/20 text-yellow-300 px-3 py-1.5 rounded-full text-xs">
+      <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-ping"></span>
+      <span class="text-gray-300" id="connection-text">กำลังเชื่อมต่อระบบหลัก...</span>
     </div>
   </header>
 
   <!-- Main Content Body -->
   <main class="flex-grow flex items-center justify-center p-4">
-
-    <!-- SCREEN 0: SETUP WIZARD (First Time Choice if running on standalone GitHub Pages) -->
-    <section id="screen-setup-wizard" class="w-full max-w-xl glass-card p-6 sm:p-8 rounded-3xl text-gray-800 space-y-6 shadow-2xl hidden">
-      <div class="text-center space-y-2">
-        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg">
-          <i data-lucide="cog" class="w-10 h-10 animate-spin"></i>
-        </div>
-        <h2 class="text-2xl font-black text-gray-900 tracking-tight">ตั้งค่าการเชื่อมต่อครั้งแรก ⚙️</h2>
-        <p class="text-gray-500 text-sm">เนื่องจากเปิดใช้งานนอกระบบพรีวิว กรุณาเลือกโหมดที่เหมาะสมกับคุณครูครับ</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Local Demo Mode Card -->
-        <div class="border-2 border-dashed border-gray-200 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-300 transition-all bg-slate-50">
-          <div class="space-y-2">
-            <span class="inline-block px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">ทดสอบด่วน</span>
-            <h3 class="text-lg font-bold text-gray-800">1. โหมดทดลอง (Demo)</h3>
-            <p class="text-xs text-gray-500 leading-relaxed">
-              เล่นจำลองบนเครื่องคอมพิวเตอร์หรืออุปกรณ์เครื่องเดียวกันได้ทันที **โดยการเปิดแท็บใหม่แบ่งครึ่งจอ** เพื่อทดสอบระบบได้โดยไม่ต้องตั้งค่าฐานข้อมูลคลาวด์
-            </p>
-          </div>
-          <button id="btn-wizard-demo" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/20">
-            เริ่มโหมดทดลองเล่นด่วน 🚀
-          </button>
-        </div>
-
-        <!-- Full Firebase Online Mode Card -->
-        <div class="border-2 border-indigo-500/20 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-500/40 transition-all bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
-          <div class="space-y-2">
-            <span class="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase">เล่นจริงในห้องเรียน</span>
-            <h3 class="text-lg font-bold text-gray-800">2. โหมดคลาวด์ออนไลน์</h3>
-            <p class="text-xs text-gray-500 leading-relaxed">
-              เชื่อมต่อกับ **Firebase Firestore** เพื่อให้นักเรียนสามารถสแกน QR Code แล้วใช้สมาร์ตโฟนของตัวเองร่วมกดกระดิ่งแย่งสิทธิ์จากทั่วห้องเรียนได้ฟรีแบบเรียลไทม์
-            </p>
-          </div>
-          <button id="btn-wizard-show-firebase" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20">
-            เชื่อมต่อออนไลน์ (Firebase) 🌐
-          </button>
-        </div>
-      </div>
-
-      <!-- Firebase Input Section (Hidden by default, shown when clicking full online) -->
-      <div id="firebase-input-area" class="border-t pt-4 space-y-3 hidden transition-all duration-300">
-        <label class="block text-xs font-bold text-gray-700 uppercase">วางรหัส Firebase Configuration JSON ของคุณครู:</label>
-        <textarea id="input-firebase-config-json" rows="6" placeholder='วางโค้ดที่คัดลอกมาจากหน้าจอตั้งค่าของ Firebase ตรงนี้ ตัวอย่างเช่น:
-{
-  "apiKey": "AIzaSy...",
-  "authDomain": "classroom-buzzer.firebaseapp.com",
-  "projectId": "classroom-buzzer",
-  "storageBucket": "classroom-buzzer.appspot.com",
-  "messagingSenderId": "123456789",
-  "appId": "1:123456789:web:abcdef..."
-}' class="w-full p-3 bg-gray-100 border border-gray-300 rounded-xl font-mono text-xs focus:outline-none focus:bg-white focus:border-emerald-500 text-gray-800"></textarea>
-        
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1">
-          <p class="font-bold">💡 วิธีรับรหัสเชื่อมต่อฟรีง่าย ๆ:</p>
-          <ol class="list-decimal pl-4 space-y-0.5">
-            <li>ไปที่เว็บ <a href="https://console.firebase.google.com" target="_blank" class="underline font-bold">Firebase Console</a> แล้วกดสร้างโปรเจกต์ใหม่</li>
-            <li>กดไอคอน Web <code class="bg-amber-100 px-1 py-0.2 rounded">&lt;/&gt;</code> เพื่อสร้าง App ในระบบ</li>
-            <li>คัดลอกข้อความในปีกกา <code class="bg-amber-100 px-1 py-0.2 rounded">firebaseConfig = { ... }</code> นำมาวางในกล่องข้อความนี้</li>
-            <li>เปิดใช้งาน **Firestore Database** และ **Anonymous Sign-In** บนแถบเมนูข้างใน Firebase Console ด้วยครับ</li>
-          </ol>
-        </div>
-
-        <div class="flex gap-2">
-          <button id="btn-wizard-cancel" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
-          <button id="btn-wizard-save-firebase" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20">บันทึกและเชื่อมต่อ</button>
-        </div>
-      </div>
-    </section>
     
     <!-- SCREEN 1: LANDING SCREEN (Select Role) -->
     <section id="screen-landing" class="w-full max-w-md space-y-6">
@@ -198,36 +137,42 @@
         </button>
       </div>
 
-      <div class="text-center text-xs text-purple-300 bg-white/5 p-3 rounded-xl border border-white/5" id="mode-badge-footer">
-        ⚡ กำลังเตรียมข้อมูลในระบบจำลอง...
+      <div class="text-center text-xs text-purple-300 bg-white/5 p-3 rounded-xl border border-white/5">
+        ⚡ ขับเคลื่อนโดยเครือข่ายความเร็วสูงสาธารณะ ไม่ต้องตั้งค่าฐานข้อมูลเอง!
       </div>
     </section>
 
-    <!-- SCREEN 2: HOST AUTH (Teacher Password Entry) -->
-    <section id="screen-host-auth" class="w-full max-w-sm glass-card p-6 rounded-3xl text-gray-800 space-y-5 hidden">
+    <!-- SCREEN 2: HOST AUTH & SETUP (Teacher PIN & Room Generator) -->
+    <section id="screen-host-auth" class="w-full max-w-md glass-card p-6 sm:p-8 rounded-3xl text-gray-800 space-y-5 hidden">
       <div class="text-center space-y-1">
         <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2">
           <i data-lucide="shield-check" class="w-6 h-6"></i>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900">รหัสผ่านสำหรับคุณครู</h2>
-        <p class="text-gray-500 text-xs">ระบุรหัสผ่านเพื่อสิทธิ์ในการควบคุมเกม (ค่าเริ่มต้นคือ <span class="font-bold text-indigo-600">1234</span>)</p>
+        <h2 class="text-2xl font-bold text-gray-900">ตั้งค่าห้องเรียนสำหรับคุณครู</h2>
+        <p class="text-gray-500 text-xs">กำหนดชื่อห้องเรียนและรหัสพินสำหรับใช้ควบคุมหน้าจอ</p>
       </div>
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">รหัสพินเข้าห้องควบคุม</label>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ชื่อห้องเรียน (ภาษาอังกฤษ/ตัวเลข)</label>
+          <input id="input-host-room" type="text" placeholder="ตัวอย่าง: MathClass" maxlength="15" class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-center text-xl font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-gray-800">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">รหัสพินเข้าควบคุมหน้าจอ</label>
           <input id="input-host-pin" type="password" placeholder="••••" maxlength="4" class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-center text-2xl font-bold tracking-widest focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-gray-800" pattern="[0-9]*" inputmode="numeric">
+          <p class="text-[10px] text-gray-400 mt-1 italic text-center">รหัสเริ่มต้นคือ "1234" สามารถปรับเปลี่ยนได้ตามต้องการ</p>
         </div>
 
         <div class="flex gap-3">
           <button id="btn-host-auth-back" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">ย้อนกลับ</button>
-          <button id="btn-host-auth-submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/30">ยืนยัน</button>
+          <button id="btn-host-auth-submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/30">สร้างห้องเรียน</button>
         </div>
       </div>
     </section>
 
     <!-- SCREEN 3: HOST DASHBOARD (Teacher's Screen) -->
-    <section id="screen-host-dashboard" class="w-full max-w-4xl space-y-6 hidden">
+    <section id="screen-host-dashboard" class="w-full max-w-5xl space-y-6 hidden">
       <!-- Quick Info Bar -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
         <div class="flex items-center gap-3">
@@ -235,13 +180,13 @@
             <i data-lucide="graduation-cap" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="font-bold text-sm sm:text-base text-white">ห้องเรียนและแผงควบคุมคุณครู</h3>
-            <p class="text-[11px] text-indigo-200" id="host-mode-subtitle">ระบบกำลังทำงาน</p>
+            <h3 class="font-bold text-sm sm:text-base text-white">ห้องเรียน: <span id="display-host-room-name" class="text-yellow-300 underline font-black">---</span></h3>
+            <p class="text-[11px] text-indigo-200">เปิดแผงควบคุมเพื่อให้สัญญาณตอบคำถาม</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
           <button id="btn-host-logout" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 rounded-lg text-xs font-medium hover:bg-rose-500/30 transition-all flex items-center gap-1">
-            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> ออกจากระบบ Host
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> สิ้นสุดและปิดห้องเรียน
           </button>
         </div>
       </div>
@@ -253,59 +198,72 @@
         <div class="lg:col-span-5 bg-white p-6 rounded-3xl text-gray-800 space-y-6 shadow-2xl flex flex-col justify-between">
           <div class="space-y-4">
             <h4 class="font-bold text-gray-900 flex items-center gap-2 border-b pb-2">
-              <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i> แผงควบคุมหลัก
+              <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i> แผงควบคุมหลักของคุณครู
             </h4>
             
             <!-- Lock / Unlock Large Toggle Button -->
             <div class="space-y-2">
-              <span class="block text-xs font-semibold text-gray-500 uppercase">สถานะปุ่มกดกระดิ่งในระบบ</span>
+              <span class="block text-xs font-semibold text-gray-500 uppercase">สถานะสัญญาณกระดิ่ง</span>
               
               <button id="btn-host-toggle-lock" class="w-full p-6 rounded-2xl text-white font-bold flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group shadow-lg">
                 <!-- Dynamic Content Loaded by JS -->
-                <div class="text-4xl" id="host-toggle-icon">🔓</div>
-                <div class="text-xl" id="host-toggle-title">เปิดกระดิ่งแล้ว</div>
-                <div class="text-xs font-light opacity-80" id="host-toggle-subtitle">นักเรียนสามารถกดแย่งสิทธิ์ได้ทันที</div>
+                <div class="text-4xl" id="host-toggle-icon">🔒</div>
+                <div class="text-xl" id="host-toggle-title">กระดิ่งปิดอยู่</div>
+                <div class="text-xs font-light opacity-80" id="host-toggle-subtitle">คลิกเพื่อปลดล็อกสัญญาณ</div>
               </button>
             </div>
 
             <!-- Lock and Unlock Quick Actions -->
-            <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="grid grid-cols-2 gap-3 pt-1">
               <button id="btn-host-quick-unlock" class="py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5">
-                <i data-lucide="unlock" class="w-4 h-4"></i> ปลดล็อกทันที
+                <i data-lucide="unlock" class="w-4 h-4"></i> ปลดล็อก (Unlock)
               </button>
               <button id="btn-host-quick-lock" class="py-2.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-bold border border-rose-200 hover:bg-rose-100 transition-colors flex items-center justify-center gap-1.5">
-                <i data-lucide="lock" class="w-4 h-4"></i> ล็อกกระดิ่งทันที
+                <i data-lucide="lock" class="w-4 h-4"></i> ล็อกสัญญาณ (Lock)
               </button>
             </div>
           </div>
 
-          <!-- Reset Queue Button -->
-          <div class="space-y-3 pt-6 border-t mt-4">
-            <button id="btn-host-reset" class="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-lg active:scale-95">
-              <i data-lucide="rotate-ccw" class="w-5 h-5"></i> รีเซ็ตและเริ่มข้อถัดไป
-            </button>
-            <p class="text-[10px] text-gray-500 text-center italic">
-              *การกดรีเซ็ตจะบังคับล็อกกระดิ่งอัตโนมัติ เพื่อให้คุณครูชี้แจงคำถามถัดไปก่อนปล่อยปุ่มสิทธิ์
+          <!-- QR Code and Join Details for Student -->
+          <div class="border-t pt-4 space-y-3">
+            <div class="text-center">
+              <p class="text-xs font-bold text-gray-600 uppercase">ให้นักเรียนสแกน QR Code เพื่อเข้าร่วมตอบคำถาม:</p>
+            </div>
+            <!-- Interactive QR Code Element -->
+            <div class="flex justify-center">
+              <div id="qrcode-container" class="p-2.5 bg-white border border-gray-200 rounded-2xl shadow-md"></div>
+            </div>
+            <p class="text-[10px] text-center text-gray-400">
+              หรือระบุชื่อห้องเรียน <span class="font-bold text-indigo-600 underline" id="student-url-fallback">--</span> ตอนกรอกชื่อกลุ่ม
             </p>
+          </div>
+
+          <!-- Reset Queue Button -->
+          <div class="space-y-3 pt-4 border-t mt-2">
+            <button id="btn-host-reset" class="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-lg active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-5 h-5"></i> ล้างรอบถัดไป (Reset)
+            </button>
           </div>
         </div>
 
         <!-- Right Column: Live Leaderboard Queue (7 columns) -->
-        <div class="lg:col-span-7 bg-white/95 backdrop-blur-md p-6 rounded-3xl text-gray-800 shadow-2xl flex flex-col">
-          <div class="flex items-center justify-between border-b pb-3 mb-4">
-            <h4 class="font-bold text-gray-900 flex items-center gap-2">
-              <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i> ลำดับผู้กดกระดิ่งเร็วที่สุด
-            </h4>
-            <div class="flex items-center gap-2">
-              <span id="badge-host-presses-count" class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
-                0 ทีม
-              </span>
+        <div class="lg:col-span-7 bg-white/95 backdrop-blur-md p-6 rounded-3xl text-gray-800 shadow-2xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+              <h4 class="font-bold text-gray-900 flex items-center gap-2">
+                <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i> ลำดับผู้กดกระดิ่งเร็วที่สุดในรอบนี้
+              </h4>
+              <div class="flex items-center gap-2">
+                <span id="badge-host-presses-count" class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                  0 ทีม
+                </span>
+              </div>
             </div>
-          </div>
 
-          <!-- Scrollable Buzzer Queue Container -->
-          <div id="host-buzzer-queue-list" class="space-y-3 flex-grow min-h-[300px] max-h-[450px] overflow-y-auto pr-1">
-            <!-- Loading and Empty States Placeholder (Rendered by JS) -->
+            <!-- Scrollable Buzzer Queue Container -->
+            <div id="host-buzzer-queue-list" class="space-y-3 flex-grow min-h-[350px] max-h-[500px] overflow-y-auto pr-1">
+              <!-- Rendered dynamically by JS -->
+            </div>
           </div>
         </div>
 
@@ -318,19 +276,24 @@
         <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
           <i data-lucide="users" class="w-7 h-7"></i>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900">สมัครเข้าทีมผู้เล่น</h2>
-        <p class="text-gray-500 text-sm">กรุณากรอกชื่อกลุ่มหรือชื่อนักเรียนเพื่อร่วมกิจกรรมกระดิ่ง</p>
+        <h2 class="text-2xl font-bold text-gray-900">สมัครเข้าร่วมตอบคำถาม</h2>
+        <p class="text-gray-500 text-sm">กรอกข้อมูลเพื่อเชื่อมโยงกระดิ่งมือถือเข้าสู่ชั้นเรียน</p>
       </div>
 
       <div class="space-y-4">
         <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ชื่อห้องเรียนคุณครู</label>
+          <input id="input-player-room-name" type="text" placeholder="เช่น MathClass" class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-lg font-bold uppercase tracking-wider focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-gray-800">
+        </div>
+
+        <div>
           <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ระบุชื่อกลุ่ม / ชื่อนักเรียน</label>
-          <input id="input-player-group-name" type="text" placeholder="ตัวอย่าง: กลุ่มแมวเหมียว, น้องบาส" maxlength="20" class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-lg font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-gray-800">
+          <input id="input-player-group-name" type="text" placeholder="ตัวอย่าง: ทีมแมวส้ม, สมศักดิ์" maxlength="20" class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-lg font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-gray-800">
         </div>
 
         <div class="flex gap-3">
           <button id="btn-player-setup-back" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">ย้อนกลับ</button>
-          <button id="btn-player-setup-submit" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/30">เข้าสู่ห้องตอบคำถาม</button>
+          <button id="btn-player-setup-submit" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/30">เชื่อมต่อกระดิ่ง</button>
         </div>
       </div>
     </section>
@@ -346,11 +309,11 @@
           </div>
           <div>
             <h3 class="font-bold text-sm text-white" id="player-display-name">ชื่อกลุ่มของคุณ</h3>
-            <p class="text-[10px] text-emerald-200">ยินดีต้อนรับผู้เล่น</p>
+            <p class="text-[10px] text-emerald-200" id="player-display-room-name">ห้องเรียน: ---</p>
           </div>
         </div>
         <button id="btn-player-exit" class="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-gray-300 rounded-lg text-xs font-medium transition-all flex items-center gap-1">
-          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> ออกจากกลุ่ม
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> ย้ายห้องเรียน
         </button>
       </div>
 
@@ -388,48 +351,33 @@
 
   <!-- Footer Info -->
   <footer class="p-3 bg-black/30 backdrop-blur-sm text-center text-xs text-white/50 border-t border-white/5">
-    <p>© 2026 Classroom Buzzer. ออกแบบมาสำหรับคุณครูเพื่อใช้จัดกิจกรรมการแข่งขันตอบคำถามเรียลไทม์</p>
+    <p>© 2026 Classroom Buzzer. ออกแบบมาให้ทำงานทันที ไม่ต้องการสมัครและจัดการฐานข้อมูลเซิร์ฟเวอร์ใด ๆ</p>
   </footer>
 
-  <!-- Firebase Setup Modules & Application Core JS Logic -->
   <script type="module">
-    // Import Web SDKs v11 from official CDN
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // 1. Connection Configurations & Mode Detectors
-    let firebaseApp = null;
-    let auth = null;
-    let db = null;
-    let appId = 'classroom-buzzer-demo';
+    // 1. Connection settings
+    // We use a high-availability, free public MQTT broker over WebSockets.
+    const MQTT_BROKER = "wss://broker.emqx.io:8084/mqtt"; 
+    
+    let client = null;
+    let roomName = ""; // Filled upon creating or joining room
+    let currentSessionId = ""; 
 
-    let isDemoMode = false; // Runs via LocalStorage & BroadcastChannel if true
-    let bc = null;         // BroadcastChannel for cross-tab local communication
-
-    // Global application local state
     const App = {
       state: {
         view: 'landing', // 'landing', 'host-auth', 'host', 'player-setup', 'player'
         groupName: localStorage.getItem('buzzer_group_name') || '',
-        config: { 
-          isLocked: true, 
-          sessionId: 'init_sess', 
-          unlockedAt: null 
-        },
+        roomName: '',
+        isLocked: true,
+        unlockedAt: null,
         buzzes: [],
         hasBuzzed: false,
         myPlacement: null,
-      },
-      
-      // Firestore refs (filled dynamically if Firebase active)
-      refs: {
-        configDoc: null,
-        pressesCol: null
       }
     };
 
-    // 2. Audio Engine Configuration (Web Audio API)
+    // 2. Audio Engine using Web Audio API
     const AudioEngine = {
       ctx: null,
       init() {
@@ -508,7 +456,7 @@
       }
     };
 
-    // 3. Beautiful Toast Alert Trigger
+    // 3. Custom toast alerts
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -536,323 +484,213 @@
       }, 3500);
     }
 
-    // 4. Initialization Engine (Firebase vs Demo Mode router)
-    async function initConnection() {
+
+    // 4. Connect to public MQTT Broker
+    function connectToRealtimeServer(roomId, role) {
       const connBadge = document.getElementById('header-connection-status');
-      const settingsBtn = document.getElementById('btn-open-settings');
-      const footerMode = document.getElementById('mode-badge-footer');
+      const connText = document.getElementById('connection-text');
       
-      // A. Try loading injected Firebase variables (Canvas preview environment)
-      let defaultFirebaseConfig = null;
-      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-        try {
-          defaultFirebaseConfig = JSON.parse(__firebase_config);
-          appId = typeof __app_id !== 'undefined' ? __app_id : 'classroom-buzzer-demo';
-        } catch (e) {
-          console.error("Failed to parse default config:", e);
-        }
+      roomName = roomId.trim().replace(/\s+/g, '_').toLowerCase();
+
+      // Disconnect if client already exists
+      if (client) {
+        try { client.end(); } catch(e) {}
       }
 
-      // B. Try loading custom Firebase credentials from localStorage (For deployed GitHub Pages)
-      const savedCustomConfig = localStorage.getItem('custom_firebase_config');
-      let customConfig = null;
-      if (savedCustomConfig) {
-        try {
-          customConfig = JSON.parse(savedCustomConfig);
-        } catch(e) {
-          localStorage.removeItem('custom_firebase_config');
-        }
-      }
+      // Generate a highly randomized client ID
+      const clientId = `cb_client_${role}_${Math.random().toString(16).substr(2, 8)}`;
+      
+      client = mqtt.connect(MQTT_BROKER, {
+        clientId: clientId,
+        clean: true,
+        connectTimeout: 5000,
+        reconnectPeriod: 2000
+      });
 
-      // Check if user has explicitly chosen Local Demo Mode
-      const chosenDemo = localStorage.getItem('mode_local_demo') === 'true';
-
-      const finalConfig = defaultFirebaseConfig || customConfig;
-
-      if (finalConfig && !chosenDemo) {
-        // Run Full Firebase Mode
-        isDemoMode = false;
-        settingsBtn.classList.remove('hidden');
-        footerMode.innerHTML = `🌐 เชื่อมต่อแบบออนไลน์เรียลไทม์ (Firebase) | <button id="footer-btn-reset-conf" class="underline text-indigo-300 hover:text-white">เปลี่ยนโหมด</button>`;
-        document.getElementById('host-mode-subtitle').innerText = "โหมดเชื่อมต่อออนไลน์ คลาวด์เสถียรเรียลไทม์";
+      client.on('connect', () => {
+        connBadge.className = "flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full text-xs";
+        connText.innerText = "ออนไลน์แล้ว";
         
+        // Subscribe to standard room events
+        const stateTopic = `classroom_buzzer/${roomName}/state`;
+        const buzzTopic = `classroom_buzzer/${roomName}/buzz`;
+        const syncRequestTopic = `classroom_buzzer/${roomName}/sync_request`;
+        const syncResponseTopic = `classroom_buzzer/${roomName}/sync_response`;
+
+        client.subscribe([stateTopic, buzzTopic, syncRequestTopic, syncResponseTopic], { qos: 1 });
+
+        // If newly joining as student, request current state immediately
+        if (role === 'student') {
+          client.publish(syncRequestTopic, JSON.stringify({ type: 'GET_STATE' }));
+        } else {
+          // If teacher, initialize state immediately
+          sendStateUpdate(App.state.isLocked);
+        }
+      });
+
+      client.on('message', (topic, payload) => {
         try {
-          firebaseApp = initializeApp(finalConfig);
-          auth = getAuth(firebaseApp);
-          db = getFirestore(firebaseApp);
-
-          App.refs.configDoc = doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_config', 'main');
-          App.refs.pressesCol = collection(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses');
-
-          // Authenticate anonymously
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-
-          onAuthStateChanged(auth, (user) => {
-            if (user) {
-              connBadge.className = "flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full text-xs";
-              connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-emerald-400 rounded-full"></span> ออนไลน์แล้ว`;
-              startFirebaseListeners();
-            } else {
-              connBadge.className = "flex items-center gap-2 bg-rose-500/20 text-rose-300 px-3 py-1.5 rounded-full text-xs";
-              connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-rose-400 rounded-full animate-ping"></span> หลุดการเชื่อมต่อ`;
-            }
-          });
-
-          // Bind switch click inside footer dynamically
-          document.getElementById('footer-btn-reset-conf').addEventListener('click', openSetupWizard);
-
-        } catch (error) {
-          console.error("Firebase connection crashed:", error);
-          showToast("ไม่สามารถเริ่มฐานข้อมูลคลาวด์ได้ กรุณาตรวจสอบรหัสเชื่อมต่อ", "error");
-          openSetupWizard();
+          const message = JSON.parse(payload.toString());
+          handleIncomingRealtimeMessage(topic, message, role);
+        } catch (e) {
+          console.error("Payload decoding error:", e);
         }
-      } 
-      else if (chosenDemo) {
-        // Run Local Demo BroadcastChannel Mode
-        isDemoMode = true;
-        settingsBtn.classList.remove('hidden');
-        footerMode.innerHTML = `🚀 โหมดจำลองในหน้าจอเดียวกัน (Demo) | <button id="footer-btn-reset-conf" class="underline text-indigo-300 hover:text-white">เปลี่ยนโหมด</button>`;
-        document.getElementById('host-mode-subtitle').innerText = "โหมดจำลองข้ามแท็บ ไร้ความหน่วงบนเครื่องคอมเดียวกัน";
+      });
 
-        connBadge.className = "flex items-center gap-2 bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-full text-xs";
-        connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse"></span> โหมดจำลอง (Local)`;
+      client.on('error', (err) => {
+        console.error("MQTT Error:", err);
+      });
 
-        startLocalDemoEngine();
-        document.getElementById('footer-btn-reset-conf').addEventListener('click', openSetupWizard);
-      } 
-      else {
-        // No config present, open Wizard Setup to allow choices
-        openSetupWizard();
-      }
+      client.on('close', () => {
+        connBadge.className = "flex items-center gap-2 bg-rose-500/20 text-rose-300 px-3 py-1.5 rounded-full text-xs";
+        connText.innerText = "กำลังเชื่อมต่อใหม่...";
+      });
     }
 
-    // 5. Setup Wizard Screen Control
-    function openSetupWizard() {
-      // Hide standard screens, show wizard
-      const screens = ['screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
-      screens.forEach(s => document.getElementById(s).classList.add('hidden'));
-      
-      document.getElementById('screen-setup-wizard').classList.remove('hidden');
-      document.getElementById('btn-open-settings').classList.add('hidden');
-      
-      const configTextarea = document.getElementById('input-firebase-config-json');
-      const savedConfig = localStorage.getItem('custom_firebase_config');
-      if (savedConfig) {
-        configTextarea.value = savedConfig;
-      }
-    }
 
-    // 6. DB Interfaces Adapters (Translates writes dynamically based on active system mode)
-    const DatabaseAdapter = {
-      async setConfig(config) {
-        if (isDemoMode) {
-          localStorage.setItem('demo_config', JSON.stringify(config));
-          bc.postMessage({ type: 'CONFIG_CHANGED', config });
-          App.state.config = config;
-          updateView();
-        } else {
-          await setDoc(App.refs.configDoc, config, { merge: true });
-        }
-      },
-      async addPress(press) {
-        if (isDemoMode) {
-          const presses = JSON.parse(localStorage.getItem('demo_presses') || '[]');
-          const groupKey = press.studentName.trim().toLowerCase();
-          
-          if (presses.some(p => p.studentName.trim().toLowerCase() === groupKey)) return;
-          
-          presses.push(press);
-          localStorage.setItem('demo_presses', JSON.stringify(presses));
-          
-          bc.postMessage({ type: 'PRESS_ADDED', press, presses });
-          App.state.buzzes = presses;
-          updateView();
-        } else {
-          const groupKey = press.studentName.trim().replace(/\s+/g, '_').toLowerCase();
-          const pressDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses', `${App.state.config.sessionId}_${groupKey}`);
-          await setDoc(pressDocRef, press);
-        }
-      },
-      async resetSession(nextSessionId) {
-        if (isDemoMode) {
-          const newConfig = { isLocked: true, sessionId: nextSessionId, unlockedAt: null };
-          localStorage.setItem('demo_config', JSON.stringify(newConfig));
-          localStorage.setItem('demo_presses', '[]');
-          
-          bc.postMessage({ type: 'SESSION_RESET', config: newConfig });
-          
-          App.state.config = newConfig;
-          App.state.buzzes = [];
+    // 5. Handling real-time Pub/Sub messages
+    function handleIncomingRealtimeMessage(topic, message, currentRole) {
+      const stateTopic = `classroom_buzzer/${roomName}/state`;
+      const buzzTopic = `classroom_buzzer/${roomName}/buzz`;
+      const syncRequestTopic = `classroom_buzzer/${roomName}/sync_request`;
+      const syncResponseTopic = `classroom_buzzer/${roomName}/sync_response`;
+
+      // Event A: Global state changed (Lock/Unlock)
+      if (topic === stateTopic) {
+        if (message.sessionId !== currentSessionId) {
+          // Clear previous round local data on state reset
+          currentSessionId = message.sessionId;
           App.state.hasBuzzed = false;
           App.state.myPlacement = null;
-          updateView();
-        } else {
-          await setDoc(App.refs.configDoc, {
-            isLocked: true,
-            sessionId: nextSessionId,
-            unlockedAt: null
-          });
-        }
-      }
-    };
-
-    // 7. ONLINE FIREBASE SUBSCRIPTIONS
-    let unsubscribeConfig = null;
-    let unsubscribePresses = null;
-
-    function startFirebaseListeners() {
-      if (unsubscribeConfig) unsubscribeConfig();
-      if (unsubscribePresses) unsubscribePresses();
-
-      // Config Snap
-      unsubscribeConfig = onSnapshot(App.refs.configDoc, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.sessionId !== App.state.config.sessionId) {
-            App.state.hasBuzzed = false;
-            App.state.myPlacement = null;
-          }
-          App.state.config = data;
-          updateView();
-        } else {
-          // Init config row if empty
-          setDoc(App.refs.configDoc, {
-            isLocked: true,
-            sessionId: 'sess_init_' + Date.now(),
-            unlockedAt: null
-          });
-        }
-      });
-
-      // Presses Snap
-      unsubscribePresses = onSnapshot(App.refs.pressesCol, (snapshot) => {
-        const presses = [];
-        snapshot.forEach((doc) => {
-          const p = doc.data();
-          if (p.sessionId === App.state.config.sessionId) {
-            presses.push(p);
-          }
-        });
-
-        // Sort by press accuracy timestamp in ascending order
-        presses.sort((a, b) => a.pressedAt - b.pressedAt);
-
-        const prevLen = App.state.buzzes.length;
-        App.state.buzzes = presses;
-
-        if (presses.length > prevLen) {
-          if (App.state.view === 'host') {
-            if (presses.length === 1) {
-              AudioEngine.playGoldChime();
-              confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-            } else {
-              AudioEngine.playSuccessBeep();
-            }
-          }
+          App.state.buzzes = [];
         }
 
-        // Student Local Index Calc
-        if (App.state.view === 'player' && App.state.groupName) {
-          const index = presses.findIndex(p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase());
-          App.state.myPlacement = index !== -1 ? index + 1 : null;
-        }
-
+        App.state.isLocked = message.isLocked;
+        App.state.unlockedAt = message.unlockedAt;
+        
         updateView();
-      });
-    }
-
-    // 8. LOCAL DEMO COMMUNICATIONS ENGINE (BroadcastChannel API)
-    function startLocalDemoEngine() {
-      if (!bc) {
-        bc = new BroadcastChannel('classroom_buzzer_local_sync');
       }
 
-      // Load existing state from browser storage
-      const savedConfig = localStorage.getItem('demo_config');
-      if (savedConfig) {
-        App.state.config = JSON.parse(savedConfig);
-      } else {
-        const initialConfig = { isLocked: true, sessionId: 'demo_' + Date.now(), unlockedAt: null };
-        localStorage.setItem('demo_config', JSON.stringify(initialConfig));
-        App.state.config = initialConfig;
-      }
+      // Event B: Student clicked buzzer
+      else if (topic === buzzTopic) {
+        if (message.sessionId === currentSessionId) {
+          // Check for duplication locally
+          const alreadyExists = App.state.buzzes.some(
+            p => p.studentName.trim().toLowerCase() === message.studentName.trim().toLowerCase()
+          );
 
-      const savedPresses = localStorage.getItem('demo_presses');
-      if (savedPresses) {
-        App.state.buzzes = JSON.parse(savedPresses);
-      }
+          if (!alreadyExists) {
+            App.state.buzzes.push(message);
+            // Sort list by pressedAt ascending
+            App.state.buzzes.sort((a, b) => a.pressedAt - b.pressedAt);
 
-      // Sync broadcasts from other open tabs
-      bc.onmessage = (event) => {
-        const { type, config, press, presses } = event.data;
-
-        if (type === 'CONFIG_CHANGED') {
-          if (config.sessionId !== App.state.config.sessionId) {
-            App.state.hasBuzzed = false;
-            App.state.myPlacement = null;
-          }
-          App.state.config = config;
-          updateView();
-        } 
-        else if (type === 'PRESS_ADDED') {
-          const prevLen = App.state.buzzes.length;
-          App.state.buzzes = presses;
-
-          if (presses.length > prevLen) {
-            if (App.state.view === 'host') {
-              if (presses.length === 1) {
+            // Trigger beautiful chime on the first buzzer press
+            if (currentRole === 'host') {
+              if (App.state.buzzes.length === 1) {
                 AudioEngine.playGoldChime();
                 confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
               } else {
                 AudioEngine.playSuccessBeep();
               }
+              // Host broadcasts updated queue immediately
+              broadcastQueue();
             }
-          }
 
-          if (App.state.view === 'player' && App.state.groupName) {
-            const index = presses.findIndex(p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase());
-            App.state.myPlacement = index !== -1 ? index + 1 : null;
+            updateView();
           }
-          updateView();
-        } 
-        else if (type === 'SESSION_RESET') {
-          App.state.hasBuzzed = false;
-          App.state.myPlacement = null;
-          App.state.config = config;
-          App.state.buzzes = [];
+        }
+      }
+
+      // Event C: Student joining mid-game and asking for sync
+      else if (topic === syncRequestTopic && currentRole === 'host') {
+        // Host replies current active state + queue
+        broadcastQueue();
+        sendStateUpdate(App.state.isLocked);
+      }
+
+      // Event D: Sync response received (Mainly for students)
+      else if (topic === syncResponseTopic && currentRole === 'student') {
+        if (message.sessionId === currentSessionId) {
+          App.state.buzzes = message.buzzes;
+          App.state.buzzes.sort((a, b) => a.pressedAt - b.pressedAt);
+
+          // Calculate placement index
+          const index = App.state.buzzes.findIndex(
+            p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase()
+          );
+          App.state.myPlacement = index !== -1 ? index + 1 : null;
+          
           updateView();
         }
-      };
-
-      // Set initial view properly
-      navigate('landing');
+      }
     }
 
-    // 9. View Router & Screen Dispatchers
+
+    // 6. Data Writers (Publishes to rooms)
+    function sendStateUpdate(isLockedStatus) {
+      if (!client || !client.connected) return;
+
+      const stateTopic = `classroom_buzzer/${roomName}/state`;
+      
+      if (!currentSessionId || isLockedStatus) {
+        // If locking or empty, generate a new unique session identifier
+        currentSessionId = "sess_" + Date.now();
+        App.state.buzzes = [];
+      }
+
+      const payload = {
+        isLocked: isLockedStatus,
+        unlockedAt: isLockedStatus ? null : Date.now(),
+        sessionId: currentSessionId
+      };
+
+      App.state.isLocked = payload.isLocked;
+      App.state.unlockedAt = payload.unlockedAt;
+
+      client.publish(stateTopic, JSON.stringify(payload), { qos: 1, retain: true });
+      updateView();
+    }
+
+    function broadcastQueue() {
+      if (!client || !client.connected) return;
+      const syncResponseTopic = `classroom_buzzer/${roomName}/sync_response`;
+      const payload = {
+        sessionId: currentSessionId,
+        buzzes: App.state.buzzes
+      };
+      client.publish(syncResponseTopic, JSON.stringify(payload), { qos: 1, retain: true });
+    }
+
+
+    // 7. Route and Views dispatchers
     function navigate(viewName) {
       AudioEngine.playSimpleClick();
       App.state.view = viewName;
 
-      // Hide all panels
-      const panels = ['screen-setup-wizard', 'screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
-      panels.forEach(id => document.getElementById(id).classList.add('hidden'));
+      const screens = ['screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
+      screens.forEach(id => document.getElementById(id).classList.add('hidden'));
 
-      // Show requested panel
       if (viewName === 'landing') {
         document.getElementById('screen-landing').classList.remove('hidden');
       } else if (viewName === 'host-auth') {
         document.getElementById('screen-host-auth').classList.remove('hidden');
-        document.getElementById('input-host-pin').value = '';
-        document.getElementById('input-host-pin').focus();
+        
+        // Autogenerate a fun randomized room code
+        const randCode = "ROOM-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('input-host-room').value = randCode;
+        document.getElementById('input-host-pin').value = '1234';
       } else if (viewName === 'host') {
         document.getElementById('screen-host-dashboard').classList.remove('hidden');
       } else if (viewName === 'player-setup') {
         document.getElementById('screen-player-setup').classList.remove('hidden');
-        document.getElementById('input-player-group-name').value = App.state.groupName;
+        
+        // Auto-extract URL Room Query
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRoom = urlParams.get('room');
+        if (urlRoom) {
+          document.getElementById('input-player-room-name').value = urlRoom.toUpperCase();
+        }
+        
         document.getElementById('input-player-group-name').focus();
       } else if (viewName === 'player') {
         document.getElementById('screen-player-dashboard').classList.remove('hidden');
@@ -869,35 +707,56 @@
       }
     }
 
-    // 10. HOST UI COMPILER
+
+    // 8. Host View Compiler
+    let qrcodeInstance = null;
+
     function renderHostScreen() {
-      const isLocked = App.state.config.isLocked;
+      const isLocked = App.state.isLocked;
       const toggleBtn = document.getElementById('btn-host-toggle-lock');
       const toggleIcon = document.getElementById('host-toggle-icon');
       const toggleTitle = document.getElementById('host-toggle-title');
       const toggleSubtitle = document.getElementById('host-toggle-subtitle');
       const queueListContainer = document.getElementById('host-buzzer-queue-list');
 
+      document.getElementById('display-host-room-name').innerText = roomName.toUpperCase();
+
       if (isLocked) {
         toggleBtn.className = "w-full p-6 rounded-2xl text-white font-bold flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group shadow-lg bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 active:scale-95";
         toggleIcon.innerText = "🔒";
         toggleTitle.innerText = "กระดิ่งถูกล็อกอยู่";
-        toggleSubtitle.innerText = "นักเรียนกดไม่ได้ (คลิกเพื่อเปิด)";
+        toggleSubtitle.innerText = "นักเรียนกดไม่ได้ (คลิกเพื่อปล่อยสัญญาณ)";
       } else {
         toggleBtn.className = "w-full p-6 rounded-2xl text-white font-bold flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group shadow-lg bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 active:scale-95 animate-pulse shadow-emerald-500/20";
         toggleIcon.innerText = "⚡ กดได้เลย!";
         toggleTitle.innerText = "กระดิ่งทำงานอยู่";
-        toggleSubtitle.innerText = "นักเรียนทุกคนกำลังกดสิทธิ์ (คลิกเพื่อล็อก)";
+        toggleSubtitle.innerText = "นักเรียนกำลังกดแย่งสิทธิ์ (คลิกเพื่อหยุดล็อก)";
       }
 
       document.getElementById('badge-host-presses-count').innerText = `${App.state.buzzes.length} กลุ่ม`;
 
+      // Build QR Code once
+      const joinLink = `${window.location.origin}${window.location.pathname}?room=${roomName.toUpperCase()}`;
+      document.getElementById('student-url-fallback').innerText = roomName.toUpperCase();
+
+      if (!qrcodeInstance) {
+        document.getElementById('qrcode-container').innerHTML = "";
+        qrcodeInstance = new QRCode(document.getElementById('qrcode-container'), {
+          text: joinLink,
+          width: 130,
+          height: 130,
+          colorDark : "#1e1b4b",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+      }
+
       if (App.state.buzzes.length === 0) {
         queueListContainer.innerHTML = `
-          <div class="flex flex-col items-center justify-center h-full min-h-[250px] text-gray-400 space-y-2">
+          <div class="flex flex-col items-center justify-center h-full min-h-[300px] text-gray-400 space-y-2">
             <div class="p-4 bg-gray-50 rounded-full"><i data-lucide="bell-ring" class="w-10 h-10 text-gray-300"></i></div>
             <p class="text-sm font-semibold">ยังไม่มีผู้กดสัญญาณ</p>
-            <p class="text-xs text-gray-400">เมื่อนักเรียนกดกระดิ่ง รายชื่อจะมาแสดงที่นี่ทันที</p>
+            <p class="text-xs text-gray-400">เมื่อนักเรียนกดกระดิ่ง รายชื่อจะสแตนด์บายเรียงลำดับที่นี่</p>
           </div>
         `;
         lucide.createIcons();
@@ -911,13 +770,12 @@
         let rankBadgeHTML = `<span class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold flex items-center justify-center text-sm">${place}</span>`;
 
         if (place === 1) {
-          cardBgClass = 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 shadow-md';
+          cardBgClass = 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 shadow-md animate-bounce-subtle';
           rankBadgeHTML = `
             <div class="relative">
-              <span class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 text-white font-black flex items-center justify-center text-base shadow-md">
+              <span class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 text-white font-black flex items-center justify-center text-base shadow-md animate-pulse">
                 🏆
               </span>
-              <span class="absolute -top-1.5 -left-1.5 text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold scale-90">1st</span>
             </div>
           `;
         } else if (place === 2) {
@@ -929,10 +787,10 @@
         }
 
         let timeOffsetHTML = '';
-        if (App.state.config.unlockedAt) {
-          const latency = (press.pressedAt - App.state.config.unlockedAt) / 1000;
+        if (App.state.unlockedAt) {
+          const latency = (press.pressedAt - App.state.unlockedAt) / 1000;
           if (latency >= 0) {
-            timeOffsetHTML = `<span class="text-xs bg-indigo-50 text-indigo-700 font-medium px-2 py-1 rounded-md">⚡ +${latency.toFixed(3)} วินาที</span>`;
+            timeOffsetHTML = `<span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2.5 py-1 rounded-lg">⚡ +${latency.toFixed(3)} วินาที</span>`;
           }
         }
 
@@ -954,13 +812,15 @@
       lucide.createIcons();
     }
 
-    // 11. PLAYER UI COMPILER
+
+    // 9. Player View Compiler
     function renderPlayerScreen() {
-      const isLocked = App.state.config.isLocked;
+      const isLocked = App.state.isLocked;
       const groupName = App.state.groupName;
       const hasBuzzed = App.state.hasBuzzed;
 
       document.getElementById('player-display-name').innerText = groupName;
+      document.getElementById('player-display-room-name').innerText = "ห้องเรียน: " + roomName.toUpperCase();
 
       const banner = document.getElementById('player-status-banner');
       const buzzerBtn = document.getElementById('btn-student-buzzer');
@@ -972,7 +832,7 @@
       buzzerBtn.disabled = false;
       ringEffect.classList.add('hidden');
 
-      // Check if current user name has already submitted a press
+      // Detect if user name is verified in global presses
       const isRecordFound = App.state.buzzes.some(p => p.studentName.trim().toLowerCase() === groupName.trim().toLowerCase());
       if (isRecordFound) {
         App.state.hasBuzzed = true;
@@ -985,7 +845,7 @@
         buzzerBtn.disabled = true;
         buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-full flex flex-col items-center justify-center text-white border-4 border-amber-300/40 relative z-10 transition-all";
         buzzerText.innerText = "กดแล้ว!";
-        buzzerSubtext.innerText = "สัญญาณถูกส่งสำเร็จ";
+        buzzerSubtext.innerText = "สัญญาณส่งเข้าบอร์ดหลักแล้ว";
 
         if (App.state.myPlacement) {
           placementBox.classList.remove('hidden');
@@ -994,23 +854,23 @@
 
           if (p === 1) {
             awardHTML = `
-              <div class="text-center p-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-indigo-950 rounded-2xl shadow-lg font-bold">
+              <div class="text-center p-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-indigo-950 rounded-2xl shadow-lg font-bold animate-pulse">
                 <div class="text-4xl mb-1">👑 คุณคืออันดับที่ 1</div>
-                <p class="text-sm">กลุ่มของคุณเร็วที่สุดในห้อง! เตรียมตัวตอบคำถามได้เลย</p>
+                <p class="text-sm">กลุ่มของคุณเร็วที่สุดในห้อง! เตรียมตอบคำถามได้เลย!</p>
               </div>
             `;
           } else if (p === 2) {
             awardHTML = `
               <div class="text-center p-4 bg-gray-100 text-gray-800 rounded-2xl font-bold">
                 <div class="text-3xl mb-1">🥈 อันดับที่ 2</div>
-                <p class="text-sm">เกือบชนะแล้ว! สแตนด์บายตอบสำรองสิทธิ์</p>
+                <p class="text-sm">สุดยอดมาก! เตรียมตัวเป็นสิทธิ์คิวสำรองตอบถัดไป</p>
               </div>
             `;
           } else {
             awardHTML = `
-              <div class="text-center p-4 bg-orange-50 text-orange-800 border rounded-2xl font-bold">
+              <div class="text-center p-4 bg-orange-50 text-orange-800 border border-orange-200 rounded-2xl font-bold">
                 <div class="text-2xl mb-1">🥉 ความเร็วอันดับที่ ${p}</div>
-                <p class="text-sm">เตรียมตัวให้พร้อมสำหรับคำถามข้อถัดไป!</p>
+                <p class="text-sm">ตอบสัญญาณได้ยอดเยี่ยม! เตรียมพร้อมในข้อถัดไป</p>
               </div>
             `;
           }
@@ -1028,61 +888,49 @@
           buzzerBtn.disabled = true;
           buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 rounded-full flex flex-col items-center justify-center text-white border-4 border-gray-400/30 relative z-10 cursor-not-allowed";
           buzzerText.innerText = "ล็อกอยู่";
-          buzzerSubtext.innerText = "รอคุณครูปล่อยสัญญาณ...";
+          buzzerSubtext.innerText = "รอคุณครูปลดล็อก...";
         } else {
           banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 shadow-lg flex items-center justify-center gap-2 animate-pulse";
-          banner.innerHTML = `<i data-lucide="unlock" class="w-5 h-5 animate-bounce"></i> ปลดล็อกแล้ว! กดกระดิ่งเร็ว!`;
+          banner.innerHTML = `<i data-lucide="unlock" class="w-5 h-5 animate-bounce"></i> ปลดล็อกแล้ว! กดแย่งกระดิ่งด่วน!`;
 
           ringEffect.classList.remove('hidden');
 
           buzzerBtn.disabled = false;
           buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 hover:from-emerald-400 hover:via-emerald-500 hover:to-teal-400 rounded-full flex flex-col items-center justify-center text-white border-4 border-emerald-300/60 relative z-10 transition-all cursor-pointer active:scale-95";
           buzzerText.innerText = "กดกระดิ่ง!";
-          buzzerSubtext.innerText = "แย่งสิทธิ์ตอบคำถามที่นี่!";
+          buzzerSubtext.innerText = "แย่งสิทธิ์ตอบคำถามตรงนี้!";
         }
       }
 
       lucide.createIcons();
     }
 
-    // 12. Actions Trigger Logic (Lock, Unlocks and Buzzer Pressing)
-    async function handleHostLockToggle() {
-      const isLocked = App.state.config.isLocked;
-      try {
-        if (isLocked) {
-          AudioEngine.playSuccessBeep();
-          await DatabaseAdapter.setConfig({
-            isLocked: false,
-            unlockedAt: Date.now()
-          });
-          showToast("เปิดปลดล็อกระบบกระดิ่งแล้ว!", "success");
-        } else {
-          AudioEngine.playLockBuzz();
-          await DatabaseAdapter.setConfig({ isLocked: true });
-          showToast("ปิดล็อกระบบกระดิ่งแล้ว", "info");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("ไม่สามารถปรับแต่งการตั้งค่าระบบได้", "error");
-      }
-    }
 
-    async function handleResetSession() {
-      if (confirm("ล้างลำดับคิวผู้ตอบคำถาม เพื่อเริ่มรอบใหม่ใช่หรือไม่?")) {
+    // 10. Direct Handlers
+    function handleHostToggleLock() {
+      const isLocked = App.state.isLocked;
+      if (isLocked) {
+        AudioEngine.playSuccessBeep();
+        sendStateUpdate(false);
+        showToast("ปลดล็อกกระดิ่งแล้ว! รอรับสัญญาณคิวความไว", "success");
+      } else {
         AudioEngine.playLockBuzz();
-        const nextSessionId = 'sess_' + Date.now();
-        try {
-          await DatabaseAdapter.resetSession(nextSessionId);
-          showToast("รีเซ็ตคิวและระบบล็อกสำเร็จ เริ่มเล่นรอบใหม่ได้เลย!", "success");
-        } catch(err) {
-          console.error(err);
-          showToast("ไม่สามารถรีเซ็ตค่าระบบได้", "error");
-        }
+        sendStateUpdate(true);
+        showToast("ล็อกกระดิ่งสัญญาณแล้ว", "info");
       }
     }
 
-    async function handleBuzzerPress() {
-      if (App.state.config.isLocked || App.state.hasBuzzed || !App.state.groupName) return;
+    function handleResetQueue() {
+      AudioEngine.playLockBuzz();
+      // Forces a new session ID and locks system
+      sendStateUpdate(true);
+      App.state.buzzes = [];
+      broadcastQueue();
+      showToast("ล้างรอบสำเร็จ! บัญชีสิทธิ์พร้อมเริ่มข้อใหม่", "success");
+    }
+
+    function handleStudentBuzzerPress() {
+      if (App.state.isLocked || App.state.hasBuzzed || !App.state.groupName) return;
 
       App.state.hasBuzzed = true;
       AudioEngine.playSuccessBeep();
@@ -1093,164 +941,124 @@
 
       renderPlayerScreen();
 
-      try {
-        await DatabaseAdapter.addPress({
+      // Publish press event directly to room
+      if (client && client.connected) {
+        const buzzTopic = `classroom_buzzer/${roomName}/buzz`;
+        const payload = {
           studentName: App.state.groupName.trim(),
           pressedAt: Date.now(),
-          sessionId: App.state.config.sessionId
-        });
-      } catch(err) {
-        console.error(err);
-        showToast("เกิดปัญหาระหว่างส่งสัญญาณเข้าเซิร์ฟเวอร์", "error");
-        App.state.hasBuzzed = false;
-        renderPlayerScreen();
+          sessionId: currentSessionId
+        };
+        client.publish(buzzTopic, JSON.stringify(payload), { qos: 1 });
       }
     }
 
-    // 13. UI Setup Events Listeners
-    function setupWizardActions() {
-      const btnDemo = document.getElementById('btn-wizard-demo');
-      const btnShowFirebase = document.getElementById('btn-wizard-show-firebase');
-      const btnCancel = document.getElementById('btn-wizard-cancel');
-      const btnSaveFirebase = document.getElementById('btn-wizard-save-firebase');
-      const firebaseArea = document.getElementById('firebase-input-area');
 
-      btnDemo.addEventListener('click', () => {
-        localStorage.setItem('mode_local_demo', 'true');
-        localStorage.removeItem('custom_firebase_config');
-        showToast("เปิดใช้งานโหมดจำลองในอุปกรณ์นี้เสร็จสิ้น", "success");
-        
-        // Reload system to start demo
-        setTimeout(() => window.location.reload(), 500);
-      });
-
-      btnShowFirebase.addEventListener('click', () => {
-        firebaseArea.classList.remove('hidden');
-      });
-
-      btnCancel.addEventListener('click', () => {
-        firebaseArea.classList.add('hidden');
-      });
-
-      btnSaveFirebase.addEventListener('click', () => {
-        const jsonVal = document.getElementById('input-firebase-config-json').value.trim();
-        if (!jsonVal) {
-          showToast("กรุณากรอกรหัสเชื่อมต่อ JSON จาก Firebase", "error");
-          return;
-        }
-
-        try {
-          const parsed = JSON.parse(jsonVal);
-          if (!parsed.apiKey || !parsed.projectId) {
-            showToast("รูปแบบข้อความ JSON ผิดพลาด กรุณาตรวจสอบชุดคีย์", "error");
-            return;
-          }
-
-          localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
-          localStorage.setItem('mode_local_demo', 'false');
-          showToast("บันทึกการเชื่อมต่อเรียบร้อยแล้ว!", "success");
-          
-          setTimeout(() => window.location.reload(), 500);
-        } catch(e) {
-          showToast("ไม่สามารถประมวลผล JSON ได้ กรุณาตรวจสอบไวยากรณ์ (เช่น ปีกกา, ฟันหนู)", "error");
-        }
-      });
-    }
-
+    // 11. Layout Event Listeners
     function setupApplicationListeners() {
-      // General landing
+      // Role Select routing
       document.getElementById('btn-select-host').addEventListener('click', () => {
-        if (sessionStorage.getItem('classroom_host_authorized') === 'true') {
-          navigate('host');
-        } else {
-          navigate('host-auth');
-        }
+        navigate('host-auth');
       });
 
       document.getElementById('btn-select-player').addEventListener('click', () => {
         navigate('player-setup');
       });
 
-      // Host Auth
+      // Host setup
       document.getElementById('btn-host-auth-back').addEventListener('click', () => navigate('landing'));
       document.getElementById('btn-host-auth-submit').addEventListener('click', () => {
         const pin = document.getElementById('input-host-pin').value;
+        const room = document.getElementById('input-host-room').value.trim();
+
+        if (!room) {
+          showToast("กรุณากำหนดชื่อห้องเรียนก่อนเปิดใช้", "error");
+          return;
+        }
+
         if (pin === '1234') {
           sessionStorage.setItem('classroom_host_authorized', 'true');
-          showToast("เข้าสู่ระบบ Host สำเร็จ ยินดีต้อนรับคุณครู!", "success");
+          showToast("สร้างและจำลองเครือข่ายห้องเรียนสำเร็จ!", "success");
+          
+          qrcodeInstance = null; // Clear previous QR Code cached instances
+          connectToRealtimeServer(room, 'host');
           navigate('host');
         } else {
-          showToast("รหัส PIN ผิดพลาด กรุณาลองใหม่อีกครั้ง", "error");
-        }
-      });
-      document.getElementById('input-host-pin').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          document.getElementById('btn-host-auth-submit').click();
+          showToast("รหัส PIN ผิดพลาด", "error");
         }
       });
 
-      // Host Screen Controls
-      document.getElementById('btn-host-toggle-lock').addEventListener('click', handleHostLockToggle);
+      // Host controls
+      document.getElementById('btn-host-toggle-lock').addEventListener('click', handleHostToggleLock);
       document.getElementById('btn-host-quick-unlock').addEventListener('click', () => {
-        if (App.state.config.isLocked) handleHostLockToggle();
+        if (App.state.isLocked) handleHostToggleLock();
       });
       document.getElementById('btn-host-quick-lock').addEventListener('click', () => {
-        if (!App.state.config.isLocked) handleHostLockToggle();
+        if (!App.state.isLocked) handleHostToggleLock();
       });
-      document.getElementById('btn-host-reset').addEventListener('click', handleResetSession);
-      
+      document.getElementById('btn-host-reset').addEventListener('click', handleResetQueue);
+
       document.getElementById('btn-host-logout').addEventListener('click', () => {
-        if (confirm("ต้องการออกจากหน้าควบคุมคุณครูหรือไม่?")) {
+        if (confirm("ต้องการยกเลิกและปิดสัญญาณห้องเรียนนี้หรือไม่?")) {
           sessionStorage.removeItem('classroom_host_authorized');
+          if (client) client.end();
           navigate('landing');
         }
       });
 
-      // Player Setup
+      // Player Join
       document.getElementById('btn-player-setup-back').addEventListener('click', () => navigate('landing'));
       document.getElementById('btn-player-setup-submit').addEventListener('click', () => {
+        const roomVal = document.getElementById('input-player-room-name').value.trim();
         const nameVal = document.getElementById('input-player-group-name').value.trim();
-        if (!nameVal) {
-          showToast("กรุณากรอกชื่อกลุ่มหรือชื่อของกลุ่มนักเรียน", "error");
+
+        if (!roomVal || !nameVal) {
+          showToast("กรุณากรอกชื่อห้องเรียนและชื่อกลุ่มนักเรียน", "error");
           return;
         }
+
         App.state.groupName = nameVal;
+        App.state.roomName = roomVal;
         localStorage.setItem('buzzer_group_name', nameVal);
-        showToast(`ยินดีต้อนรับ กลุ่ม "${nameVal}"`, "success");
+
+        connectToRealtimeServer(roomVal, 'student');
+        showToast(`กำลังเชื่อมต่อกระดิ่งเข้าห้องเรียน ${roomVal.toUpperCase()}...`, "info");
         navigate('player');
       });
 
-      // Player Actions
+      // Player Exit
       document.getElementById('btn-player-exit').addEventListener('click', () => {
-        if (confirm("ต้องการลงทะเบียนกลุ่มใหม่ใช่หรือไม่?")) {
+        if (confirm("ต้องการออกจากห้องเรียนเพื่อสมัครเข้าร่วมห้องอื่นหรือไม่?")) {
+          if (client) client.end();
           navigate('player-setup');
         }
       });
 
-      const buzzerBtnNode = document.getElementById('btn-student-buzzer');
-      buzzerBtnNode.addEventListener('mousedown', (e) => {
+      // Student giant physical-touch button events
+      const studentBuzzerBtn = document.getElementById('btn-student-buzzer');
+      studentBuzzerBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        handleBuzzerPress();
+        handleStudentBuzzerPress();
       });
-      buzzerBtnNode.addEventListener('touchstart', (e) => {
+      studentBuzzerBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        handleBuzzerPress();
-      });
-
-      // Header Settings Button
-      document.getElementById('btn-open-settings').addEventListener('click', () => {
-        if (confirm("คุณครูต้องการปรับปรุงค่าการเชื่อมต่อของระบบใช่หรือไม่?")) {
-          openSetupWizard();
-        }
+        handleStudentBuzzerPress();
       });
     }
 
-    // 14. Entry Execution
-    window.addEventListener('DOMContentLoaded', async () => {
+    // 12. Run app
+    window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      setupWizardActions();
       setupApplicationListeners();
-      await initConnection();
+      
+      // Auto routing based on URL room parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRoom = urlParams.get('room');
+      if (urlRoom) {
+        navigate('player-setup');
+      } else {
+        navigate('landing');
+      }
     });
 
   </script>
