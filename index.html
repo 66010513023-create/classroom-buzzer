@@ -28,7 +28,7 @@
     
     /* 3D Glassmorphism & Soft Shadowing */
     .glass-card {
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -80,14 +80,90 @@
         <p class="text-[10px] text-purple-200 tracking-wider uppercase">ระบบกระดิ่งตอบคำถามอัจฉริยะ</p>
       </div>
     </div>
-    <div id="header-connection-status" class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs">
-      <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-ping"></span>
-      <span class="text-gray-300">กำลังเชื่อมต่อ...</span>
+    <div class="flex items-center gap-2">
+      <!-- Settings Change Button -->
+      <button id="btn-open-settings" class="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all hidden" title="ตั้งค่าการเชื่อมต่อ">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+      </button>
+      <div id="header-connection-status" class="flex items-center gap-2 bg-yellow-400/20 text-yellow-300 px-3 py-1.5 rounded-full text-xs">
+        <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-ping"></span>
+        <span class="text-gray-300">กำลังตรวจสอบระบบ...</span>
+      </div>
     </div>
   </header>
 
   <!-- Main Content Body -->
   <main class="flex-grow flex items-center justify-center p-4">
+
+    <!-- SCREEN 0: SETUP WIZARD (First Time Choice if running on standalone GitHub Pages) -->
+    <section id="screen-setup-wizard" class="w-full max-w-xl glass-card p-6 sm:p-8 rounded-3xl text-gray-800 space-y-6 shadow-2xl hidden">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg">
+          <i data-lucide="cog" class="w-10 h-10 animate-spin"></i>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight">ตั้งค่าการเชื่อมต่อครั้งแรก ⚙️</h2>
+        <p class="text-gray-500 text-sm">เนื่องจากเปิดใช้งานนอกระบบพรีวิว กรุณาเลือกโหมดที่เหมาะสมกับคุณครูครับ</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Local Demo Mode Card -->
+        <div class="border-2 border-dashed border-gray-200 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-300 transition-all bg-slate-50">
+          <div class="space-y-2">
+            <span class="inline-block px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">ทดสอบด่วน</span>
+            <h3 class="text-lg font-bold text-gray-800">1. โหมดทดลอง (Demo)</h3>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              เล่นจำลองบนเครื่องคอมพิวเตอร์หรืออุปกรณ์เครื่องเดียวกันได้ทันที **โดยการเปิดแท็บใหม่แบ่งครึ่งจอ** เพื่อทดสอบระบบได้โดยไม่ต้องตั้งค่าฐานข้อมูลคลาวด์
+            </p>
+          </div>
+          <button id="btn-wizard-demo" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/20">
+            เริ่มโหมดทดลองเล่นด่วน 🚀
+          </button>
+        </div>
+
+        <!-- Full Firebase Online Mode Card -->
+        <div class="border-2 border-indigo-500/20 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-500/40 transition-all bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
+          <div class="space-y-2">
+            <span class="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase">เล่นจริงในห้องเรียน</span>
+            <h3 class="text-lg font-bold text-gray-800">2. โหมดคลาวด์ออนไลน์</h3>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              เชื่อมต่อกับ **Firebase Firestore** เพื่อให้นักเรียนสามารถสแกน QR Code แล้วใช้สมาร์ตโฟนของตัวเองร่วมกดกระดิ่งแย่งสิทธิ์จากทั่วห้องเรียนได้ฟรีแบบเรียลไทม์
+            </p>
+          </div>
+          <button id="btn-wizard-show-firebase" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20">
+            เชื่อมต่อออนไลน์ (Firebase) 🌐
+          </button>
+        </div>
+      </div>
+
+      <!-- Firebase Input Section (Hidden by default, shown when clicking full online) -->
+      <div id="firebase-input-area" class="border-t pt-4 space-y-3 hidden transition-all duration-300">
+        <label class="block text-xs font-bold text-gray-700 uppercase">วางรหัส Firebase Configuration JSON ของคุณครู:</label>
+        <textarea id="input-firebase-config-json" rows="6" placeholder='วางโค้ดที่คัดลอกมาจากหน้าจอตั้งค่าของ Firebase ตรงนี้ ตัวอย่างเช่น:
+{
+  "apiKey": "AIzaSy...",
+  "authDomain": "classroom-buzzer.firebaseapp.com",
+  "projectId": "classroom-buzzer",
+  "storageBucket": "classroom-buzzer.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef..."
+}' class="w-full p-3 bg-gray-100 border border-gray-300 rounded-xl font-mono text-xs focus:outline-none focus:bg-white focus:border-emerald-500 text-gray-800"></textarea>
+        
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1">
+          <p class="font-bold">💡 วิธีรับรหัสเชื่อมต่อฟรีง่าย ๆ:</p>
+          <ol class="list-decimal pl-4 space-y-0.5">
+            <li>ไปที่เว็บ <a href="https://console.firebase.google.com" target="_blank" class="underline font-bold">Firebase Console</a> แล้วกดสร้างโปรเจกต์ใหม่</li>
+            <li>กดไอคอน Web <code class="bg-amber-100 px-1 py-0.2 rounded">&lt;/&gt;</code> เพื่อสร้าง App ในระบบ</li>
+            <li>คัดลอกข้อความในปีกกา <code class="bg-amber-100 px-1 py-0.2 rounded">firebaseConfig = { ... }</code> นำมาวางในกล่องข้อความนี้</li>
+            <li>เปิดใช้งาน **Firestore Database** และ **Anonymous Sign-In** บนแถบเมนูข้างใน Firebase Console ด้วยครับ</li>
+          </ol>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="btn-wizard-cancel" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
+          <button id="btn-wizard-save-firebase" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20">บันทึกและเชื่อมต่อ</button>
+        </div>
+      </div>
+    </section>
     
     <!-- SCREEN 1: LANDING SCREEN (Select Role) -->
     <section id="screen-landing" class="w-full max-w-md space-y-6">
@@ -122,8 +198,8 @@
         </button>
       </div>
 
-      <div class="text-center text-xs text-purple-300 bg-white/5 p-3 rounded-xl border border-white/5">
-        ⚡ ขับเคลื่อนโดยระบบฐานข้อมูลคลาวด์แบบเรียลไทม์ กดปุ๊บรู้ผลปั๊บ!
+      <div class="text-center text-xs text-purple-300 bg-white/5 p-3 rounded-xl border border-white/5" id="mode-badge-footer">
+        ⚡ กำลังเตรียมข้อมูลในระบบจำลอง...
       </div>
     </section>
 
@@ -160,7 +236,7 @@
           </div>
           <div>
             <h3 class="font-bold text-sm sm:text-base text-white">ห้องเรียนและแผงควบคุมคุณครู</h3>
-            <p class="text-[11px] text-indigo-200">เปิดระบบกระดิ่งเพื่อส่งสัญญาณตอบคำถาม</p>
+            <p class="text-[11px] text-indigo-200" id="host-mode-subtitle">ระบบกำลังทำงาน</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
@@ -322,18 +398,19 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // 1. Core Config & Global Firebase State Setup
-    // Use the dynamic global credentials injected by the container environment.
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'classroom-buzzer-demo';
+    // 1. Connection Configurations & Mode Detectors
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let appId = 'classroom-buzzer-demo';
 
-    // 2. Application Shared State
+    let isDemoMode = false; // Runs via LocalStorage & BroadcastChannel if true
+    let bc = null;         // BroadcastChannel for cross-tab local communication
+
+    // Global application local state
     const App = {
       state: {
-        view: 'landing', // View Routing: 'landing', 'host-auth', 'host', 'player-setup', 'player'
+        view: 'landing', // 'landing', 'host-auth', 'host', 'player-setup', 'player'
         groupName: localStorage.getItem('buzzer_group_name') || '',
         config: { 
           isLocked: true, 
@@ -343,27 +420,23 @@
         buzzes: [],
         hasBuzzed: false,
         myPlacement: null,
-        isAuthInProgress: false
       },
       
-      // Global Firestore References
+      // Firestore refs (filled dynamically if Firebase active)
       refs: {
-        configDoc: doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_config', 'main'),
-        pressesCol: collection(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses')
+        configDoc: null,
+        pressesCol: null
       }
     };
 
-    // 3. Audio & Sound Utility Functions (Native Web Audio API)
+    // 2. Audio Engine Configuration (Web Audio API)
     const AudioEngine = {
       ctx: null,
-
       init() {
         if (!this.ctx) {
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         }
       },
-
-      // Sound when a player secures 1st place!
       playGoldChime() {
         this.init();
         const now = this.ctx.currentTime;
@@ -376,96 +449,71 @@
         gain.connect(this.ctx.destination);
 
         osc1.type = 'triangle';
-        osc1.frequency.setValueAtTime(523.25, now); // C5
-        osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
+        osc1.frequency.setValueAtTime(523.25, now);
+        osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3);
 
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(659.25, now); // E5
-        osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.3); // E6
+        osc2.frequency.setValueAtTime(659.25, now);
+        osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.3);
 
         gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
 
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + 0.8);
-        osc2.stop(now + 0.8);
+        osc1.start(now); osc2.start(now);
+        osc1.stop(now + 0.8); osc2.stop(now + 0.8);
       },
-
-      // Standard click & lock beeps
       playSuccessBeep() {
         this.init();
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880, now + 0.1); // A5
-
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.1);
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
         osc.start(now);
         osc.stop(now + 0.4);
       },
-
-      // Low buzzing lock sound
       playLockBuzz() {
         this.init();
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(180, now);
         osc.frequency.setValueAtTime(120, now + 0.1);
-
         gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-
         osc.start(now);
         osc.stop(now + 0.3);
       },
-
-      // Simple notification click sound
       playSimpleClick() {
         this.init();
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1000, now);
-
         gain.gain.setValueAtTime(0.05, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-
         osc.start(now);
         osc.stop(now + 0.05);
       }
     };
 
-    // 4. Custom UI Notification Toast
+    // 3. Beautiful Toast Alert Trigger
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       
-      const iconMap = {
-        success: 'check-circle',
-        error: 'alert-triangle',
-        info: 'info'
-      };
-      
+      const iconMap = { success: 'check-circle', error: 'alert-triangle', info: 'info' };
       const bgMap = {
         success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
         error: 'bg-rose-50 border-rose-200 text-rose-800',
@@ -481,147 +529,319 @@
       container.appendChild(toast);
       lucide.createIcons();
 
-      // Trigger transition enter
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 50);
-
-      // Dismiss transition and delete element
+      setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 50);
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-[-10px]');
         setTimeout(() => toast.remove(), 300);
       }, 3500);
     }
 
-    // 5. Authentication & Database Connection Logic
-    async function startAuth() {
+    // 4. Initialization Engine (Firebase vs Demo Mode router)
+    async function initConnection() {
       const connBadge = document.getElementById('header-connection-status');
+      const settingsBtn = document.getElementById('btn-open-settings');
+      const footerMode = document.getElementById('mode-badge-footer');
       
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+      // A. Try loading injected Firebase variables (Canvas preview environment)
+      let defaultFirebaseConfig = null;
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        try {
+          defaultFirebaseConfig = JSON.parse(__firebase_config);
+          appId = typeof __app_id !== 'undefined' ? __app_id : 'classroom-buzzer-demo';
+        } catch (e) {
+          console.error("Failed to parse default config:", e);
         }
+      }
+
+      // B. Try loading custom Firebase credentials from localStorage (For deployed GitHub Pages)
+      const savedCustomConfig = localStorage.getItem('custom_firebase_config');
+      let customConfig = null;
+      if (savedCustomConfig) {
+        try {
+          customConfig = JSON.parse(savedCustomConfig);
+        } catch(e) {
+          localStorage.removeItem('custom_firebase_config');
+        }
+      }
+
+      // Check if user has explicitly chosen Local Demo Mode
+      const chosenDemo = localStorage.getItem('mode_local_demo') === 'true';
+
+      const finalConfig = defaultFirebaseConfig || customConfig;
+
+      if (finalConfig && !chosenDemo) {
+        // Run Full Firebase Mode
+        isDemoMode = false;
+        settingsBtn.classList.remove('hidden');
+        footerMode.innerHTML = `🌐 เชื่อมต่อแบบออนไลน์เรียลไทม์ (Firebase) | <button id="footer-btn-reset-conf" class="underline text-indigo-300 hover:text-white">เปลี่ยนโหมด</button>`;
+        document.getElementById('host-mode-subtitle').innerText = "โหมดเชื่อมต่อออนไลน์ คลาวด์เสถียรเรียลไทม์";
         
-        // Handle auth state changes
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            connBadge.className = "flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full text-xs";
-            connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-emerald-400 rounded-full"></span> ดำเนินการต่อได้`;
-            setupRealtimeSubscriptions();
+        try {
+          firebaseApp = initializeApp(finalConfig);
+          auth = getAuth(firebaseApp);
+          db = getFirestore(firebaseApp);
+
+          App.refs.configDoc = doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_config', 'main');
+          App.refs.pressesCol = collection(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses');
+
+          // Authenticate anonymously
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
           } else {
-            connBadge.className = "flex items-center gap-2 bg-rose-500/20 text-rose-300 px-3 py-1.5 rounded-full text-xs";
-            connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping"></span> คลาดการเชื่อมต่อ`;
+            await signInAnonymously(auth);
           }
-        });
-        
-      } catch (error) {
-        console.error("Authentication Failure:", error);
-        showToast("ล้มเหลวในการเชื่อมโยงเครือข่าย กรุณารีเฟรชเพื่อลองใหม่", "error");
+
+          onAuthStateChanged(auth, (user) => {
+            if (user) {
+              connBadge.className = "flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full text-xs";
+              connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-emerald-400 rounded-full"></span> ออนไลน์แล้ว`;
+              startFirebaseListeners();
+            } else {
+              connBadge.className = "flex items-center gap-2 bg-rose-500/20 text-rose-300 px-3 py-1.5 rounded-full text-xs";
+              connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-rose-400 rounded-full animate-ping"></span> หลุดการเชื่อมต่อ`;
+            }
+          });
+
+          // Bind switch click inside footer dynamically
+          document.getElementById('footer-btn-reset-conf').addEventListener('click', openSetupWizard);
+
+        } catch (error) {
+          console.error("Firebase connection crashed:", error);
+          showToast("ไม่สามารถเริ่มฐานข้อมูลคลาวด์ได้ กรุณาตรวจสอบรหัสเชื่อมต่อ", "error");
+          openSetupWizard();
+        }
+      } 
+      else if (chosenDemo) {
+        // Run Local Demo BroadcastChannel Mode
+        isDemoMode = true;
+        settingsBtn.classList.remove('hidden');
+        footerMode.innerHTML = `🚀 โหมดจำลองในหน้าจอเดียวกัน (Demo) | <button id="footer-btn-reset-conf" class="underline text-indigo-300 hover:text-white">เปลี่ยนโหมด</button>`;
+        document.getElementById('host-mode-subtitle').innerText = "โหมดจำลองข้ามแท็บ ไร้ความหน่วงบนเครื่องคอมเดียวกัน";
+
+        connBadge.className = "flex items-center gap-2 bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-full text-xs";
+        connBadge.innerHTML = `<span class="w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse"></span> โหมดจำลอง (Local)`;
+
+        startLocalDemoEngine();
+        document.getElementById('footer-btn-reset-conf').addEventListener('click', openSetupWizard);
+      } 
+      else {
+        // No config present, open Wizard Setup to allow choices
+        openSetupWizard();
       }
     }
 
-    // 6. Firestore Subscriptions (Strict paths & No complex queries)
-    let unsubscribeConfig = null;
-    let unsubscribePresses = null;
+    // 5. Setup Wizard Screen Control
+    function openSetupWizard() {
+      // Hide standard screens, show wizard
+      const screens = ['screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
+      screens.forEach(s => document.getElementById(s).classList.add('hidden'));
+      
+      document.getElementById('screen-setup-wizard').classList.remove('hidden');
+      document.getElementById('btn-open-settings').classList.add('hidden');
+      
+      const configTextarea = document.getElementById('input-firebase-config-json');
+      const savedConfig = localStorage.getItem('custom_firebase_config');
+      if (savedConfig) {
+        configTextarea.value = savedConfig;
+      }
+    }
 
-    function setupRealtimeSubscriptions() {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      // Unsubscribe existing listeners
-      if (unsubscribeConfig) unsubscribeConfig();
-      if (unsubscribePresses) unsubscribePresses();
-
-      // Subscribe to Configuration Doc (Main Buzzer Lock State)
-      unsubscribeConfig = onSnapshot(App.refs.configDoc, (docSnap) => {
-        if (docSnap.exists()) {
-          const remoteData = docSnap.data();
-          
-          // Detect session changes to automatically clear locally checked states
-          if (remoteData.sessionId !== App.state.config.sessionId) {
-            App.state.hasBuzzed = false;
-            App.state.myPlacement = null;
-          }
-          
-          App.state.config = remoteData;
+    // 6. DB Interfaces Adapters (Translates writes dynamically based on active system mode)
+    const DatabaseAdapter = {
+      async setConfig(config) {
+        if (isDemoMode) {
+          localStorage.setItem('demo_config', JSON.stringify(config));
+          bc.postMessage({ type: 'CONFIG_CHANGED', config });
+          App.state.config = config;
           updateView();
         } else {
-          // Initialize Config if missing
-          setDoc(App.refs.configDoc, {
+          await setDoc(App.refs.configDoc, config, { merge: true });
+        }
+      },
+      async addPress(press) {
+        if (isDemoMode) {
+          const presses = JSON.parse(localStorage.getItem('demo_presses') || '[]');
+          const groupKey = press.studentName.trim().toLowerCase();
+          
+          if (presses.some(p => p.studentName.trim().toLowerCase() === groupKey)) return;
+          
+          presses.push(press);
+          localStorage.setItem('demo_presses', JSON.stringify(presses));
+          
+          bc.postMessage({ type: 'PRESS_ADDED', press, presses });
+          App.state.buzzes = presses;
+          updateView();
+        } else {
+          const groupKey = press.studentName.trim().replace(/\s+/g, '_').toLowerCase();
+          const pressDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses', `${App.state.config.sessionId}_${groupKey}`);
+          await setDoc(pressDocRef, press);
+        }
+      },
+      async resetSession(nextSessionId) {
+        if (isDemoMode) {
+          const newConfig = { isLocked: true, sessionId: nextSessionId, unlockedAt: null };
+          localStorage.setItem('demo_config', JSON.stringify(newConfig));
+          localStorage.setItem('demo_presses', '[]');
+          
+          bc.postMessage({ type: 'SESSION_RESET', config: newConfig });
+          
+          App.state.config = newConfig;
+          App.state.buzzes = [];
+          App.state.hasBuzzed = false;
+          App.state.myPlacement = null;
+          updateView();
+        } else {
+          await setDoc(App.refs.configDoc, {
             isLocked: true,
-            sessionId: 'initial_classroom_' + Date.now(),
+            sessionId: nextSessionId,
             unlockedAt: null
           });
         }
-      }, (err) => {
-        console.error("Config subscription failed:", err);
-        showToast("ไม่สามารถเรียกดูข้อมูลระบบหลักได้", "error");
+      }
+    };
+
+    // 7. ONLINE FIREBASE SUBSCRIPTIONS
+    let unsubscribeConfig = null;
+    let unsubscribePresses = null;
+
+    function startFirebaseListeners() {
+      if (unsubscribeConfig) unsubscribeConfig();
+      if (unsubscribePresses) unsubscribePresses();
+
+      // Config Snap
+      unsubscribeConfig = onSnapshot(App.refs.configDoc, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.sessionId !== App.state.config.sessionId) {
+            App.state.hasBuzzed = false;
+            App.state.myPlacement = null;
+          }
+          App.state.config = data;
+          updateView();
+        } else {
+          // Init config row if empty
+          setDoc(App.refs.configDoc, {
+            isLocked: true,
+            sessionId: 'sess_init_' + Date.now(),
+            unlockedAt: null
+          });
+        }
       });
 
-      // Subscribe to Presses Collection
-      // RULE 2: No compound queries or orderby's inside Firestore, filter/sort locally in JS memory.
+      // Presses Snap
       unsubscribePresses = onSnapshot(App.refs.pressesCol, (snapshot) => {
-        const filteredList = [];
+        const presses = [];
         snapshot.forEach((doc) => {
-          const press = doc.data();
-          // Filter out press results belonging only to the currently active session in client side
-          if (press.sessionId === App.state.config.sessionId) {
-            filteredList.push(press);
+          const p = doc.data();
+          if (p.sessionId === App.state.config.sessionId) {
+            presses.push(p);
           }
         });
 
         // Sort by press accuracy timestamp in ascending order
-        filteredList.sort((a, b) => a.pressedAt - b.pressedAt);
+        presses.sort((a, b) => a.pressedAt - b.pressedAt);
 
-        // Track new buzz actions
-        const previousLength = App.state.buzzes.length;
-        App.state.buzzes = filteredList;
+        const prevLen = App.state.buzzes.length;
+        App.state.buzzes = presses;
 
-        if (filteredList.length > previousLength) {
-          // Trigger nice alert audio in corresponding views
+        if (presses.length > prevLen) {
           if (App.state.view === 'host') {
-            if (filteredList.length === 1) {
+            if (presses.length === 1) {
               AudioEngine.playGoldChime();
-              // Fire confetti at first press!
-              confetti({
-                particleCount: 120,
-                spread: 80,
-                origin: { y: 0.6 }
-              });
+              confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
             } else {
               AudioEngine.playSuccessBeep();
             }
           }
         }
 
-        // Calculate student's local placement if in Player View
+        // Student Local Index Calc
         if (App.state.view === 'player' && App.state.groupName) {
-          const myIndex = filteredList.findIndex(
-            p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase()
-          );
-          App.state.myPlacement = myIndex !== -1 ? myIndex + 1 : null;
+          const index = presses.findIndex(p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase());
+          App.state.myPlacement = index !== -1 ? index + 1 : null;
         }
 
         updateView();
-      }, (err) => {
-        console.error("Presses subscription failed:", err);
       });
     }
 
-    // 7. Route Routing & Screen Renders
+    // 8. LOCAL DEMO COMMUNICATIONS ENGINE (BroadcastChannel API)
+    function startLocalDemoEngine() {
+      if (!bc) {
+        bc = new BroadcastChannel('classroom_buzzer_local_sync');
+      }
+
+      // Load existing state from browser storage
+      const savedConfig = localStorage.getItem('demo_config');
+      if (savedConfig) {
+        App.state.config = JSON.parse(savedConfig);
+      } else {
+        const initialConfig = { isLocked: true, sessionId: 'demo_' + Date.now(), unlockedAt: null };
+        localStorage.setItem('demo_config', JSON.stringify(initialConfig));
+        App.state.config = initialConfig;
+      }
+
+      const savedPresses = localStorage.getItem('demo_presses');
+      if (savedPresses) {
+        App.state.buzzes = JSON.parse(savedPresses);
+      }
+
+      // Sync broadcasts from other open tabs
+      bc.onmessage = (event) => {
+        const { type, config, press, presses } = event.data;
+
+        if (type === 'CONFIG_CHANGED') {
+          if (config.sessionId !== App.state.config.sessionId) {
+            App.state.hasBuzzed = false;
+            App.state.myPlacement = null;
+          }
+          App.state.config = config;
+          updateView();
+        } 
+        else if (type === 'PRESS_ADDED') {
+          const prevLen = App.state.buzzes.length;
+          App.state.buzzes = presses;
+
+          if (presses.length > prevLen) {
+            if (App.state.view === 'host') {
+              if (presses.length === 1) {
+                AudioEngine.playGoldChime();
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+              } else {
+                AudioEngine.playSuccessBeep();
+              }
+            }
+          }
+
+          if (App.state.view === 'player' && App.state.groupName) {
+            const index = presses.findIndex(p => p.studentName.trim().toLowerCase() === App.state.groupName.trim().toLowerCase());
+            App.state.myPlacement = index !== -1 ? index + 1 : null;
+          }
+          updateView();
+        } 
+        else if (type === 'SESSION_RESET') {
+          App.state.hasBuzzed = false;
+          App.state.myPlacement = null;
+          App.state.config = config;
+          App.state.buzzes = [];
+          updateView();
+        }
+      };
+
+      // Set initial view properly
+      navigate('landing');
+    }
+
+    // 9. View Router & Screen Dispatchers
     function navigate(viewName) {
       AudioEngine.playSimpleClick();
       App.state.view = viewName;
-      
-      // Hide all screen nodes
-      const screens = ['screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
-      screens.forEach(screenId => {
-        document.getElementById(screenId).classList.add('hidden');
-      });
 
-      // Show requested view
+      // Hide all panels
+      const panels = ['screen-setup-wizard', 'screen-landing', 'screen-host-auth', 'screen-host-dashboard', 'screen-player-setup', 'screen-player-dashboard'];
+      panels.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+      // Show requested panel
       if (viewName === 'landing') {
         document.getElementById('screen-landing').classList.remove('hidden');
       } else if (viewName === 'host-auth') {
@@ -641,7 +861,6 @@
       updateView();
     }
 
-    // Core view state render dispatcher
     function updateView() {
       if (App.state.view === 'host') {
         renderHostScreen();
@@ -650,17 +869,15 @@
       }
     }
 
-    // 8. Host Screen Interactive Logic
+    // 10. HOST UI COMPILER
     function renderHostScreen() {
       const isLocked = App.state.config.isLocked;
       const toggleBtn = document.getElementById('btn-host-toggle-lock');
       const toggleIcon = document.getElementById('host-toggle-icon');
       const toggleTitle = document.getElementById('host-toggle-title');
       const toggleSubtitle = document.getElementById('host-toggle-subtitle');
-      const totalPressesBadge = document.getElementById('badge-host-presses-count');
       const queueListContainer = document.getElementById('host-buzzer-queue-list');
 
-      // 1. Update State Button styles dynamically
       if (isLocked) {
         toggleBtn.className = "w-full p-6 rounded-2xl text-white font-bold flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group shadow-lg bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 active:scale-95";
         toggleIcon.innerText = "🔒";
@@ -673,16 +890,14 @@
         toggleSubtitle.innerText = "นักเรียนทุกคนกำลังกดสิทธิ์ (คลิกเพื่อล็อก)";
       }
 
-      // 2. Count Total active buzzes in this session
-      totalPressesBadge.innerText = `${App.state.buzzes.length} กลุ่ม`;
+      document.getElementById('badge-host-presses-count').innerText = `${App.state.buzzes.length} กลุ่ม`;
 
-      // 3. Render Leaderboard List
       if (App.state.buzzes.length === 0) {
         queueListContainer.innerHTML = `
           <div class="flex flex-col items-center justify-center h-full min-h-[250px] text-gray-400 space-y-2">
             <div class="p-4 bg-gray-50 rounded-full"><i data-lucide="bell-ring" class="w-10 h-10 text-gray-300"></i></div>
             <p class="text-sm font-semibold">ยังไม่มีผู้กดสัญญาณ</p>
-            <p class="text-xs text-gray-400">เมื่อนักเรียนกดกระดิ่ง รายชื่อจะมาสแตนด์บายที่นี่ทันที</p>
+            <p class="text-xs text-gray-400">เมื่อนักเรียนกดกระดิ่ง รายชื่อจะมาแสดงที่นี่ทันที</p>
           </div>
         `;
         lucide.createIcons();
@@ -694,10 +909,9 @@
         const place = index + 1;
         let cardBgClass = 'bg-white hover:bg-gray-50 border border-gray-100';
         let rankBadgeHTML = `<span class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold flex items-center justify-center text-sm">${place}</span>`;
-        
-        // Highlight 1st, 2nd and 3rd Places beautifully
+
         if (place === 1) {
-          cardBgClass = 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 shadow-md animate-bounce-subtle';
+          cardBgClass = 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 shadow-md';
           rankBadgeHTML = `
             <div class="relative">
               <span class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 text-white font-black flex items-center justify-center text-base shadow-md">
@@ -707,23 +921,18 @@
             </div>
           `;
         } else if (place === 2) {
-          cardBgClass = 'bg-slate-50 hover:bg-slate-100 border-2 border-slate-300';
-          rankBadgeHTML = `
-            <span class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-sm">🥈</span>
-          `;
+          cardBgClass = 'bg-slate-50 border-2 border-slate-300';
+          rankBadgeHTML = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-sm">🥈</span>`;
         } else if (place === 3) {
-          cardBgClass = 'bg-amber-50/50 hover:bg-amber-50 border border-amber-200';
-          rankBadgeHTML = `
-            <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-sm">🥉</span>
-          `;
+          cardBgClass = 'bg-amber-50/50 border border-amber-200';
+          rankBadgeHTML = `<span class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-sm">🥉</span>`;
         }
 
-        // Calculate and format latency response speed
         let timeOffsetHTML = '';
         if (App.state.config.unlockedAt) {
-          const latencyInSeconds = (press.pressedAt - App.state.config.unlockedAt) / 1000;
-          if (latencyInSeconds >= 0) {
-            timeOffsetHTML = `<span class="text-xs bg-indigo-50 text-indigo-700 font-medium px-2 py-1 rounded-md">⚡ +${latencyInSeconds.toFixed(3)} วินาที</span>`;
+          const latency = (press.pressedAt - App.state.config.unlockedAt) / 1000;
+          if (latency >= 0) {
+            timeOffsetHTML = `<span class="text-xs bg-indigo-50 text-indigo-700 font-medium px-2 py-1 rounded-md">⚡ +${latency.toFixed(3)} วินาที</span>`;
           }
         }
 
@@ -733,12 +942,10 @@
               ${rankBadgeHTML}
               <div>
                 <h5 class="font-bold text-gray-900 text-base">${press.studentName}</h5>
-                <span class="text-[10px] text-gray-400">กดกระดิ่งเมื่อ ${new Date(press.pressedAt).toLocaleTimeString('th-TH')}</span>
+                <span class="text-[10px] text-gray-400">กดตอบเมื่อ ${new Date(press.pressedAt).toLocaleTimeString('th-TH')}</span>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              ${timeOffsetHTML}
-            </div>
+            <div>${timeOffsetHTML}</div>
           </div>
         `;
       });
@@ -747,12 +954,12 @@
       lucide.createIcons();
     }
 
-    // 9. Player (Student) Dashboard View
+    // 11. PLAYER UI COMPILER
     function renderPlayerScreen() {
       const isLocked = App.state.config.isLocked;
       const groupName = App.state.groupName;
       const hasBuzzed = App.state.hasBuzzed;
-      
+
       document.getElementById('player-display-name').innerText = groupName;
 
       const banner = document.getElementById('player-status-banner');
@@ -762,45 +969,48 @@
       const placementBox = document.getElementById('player-placement-results');
       const ringEffect = document.getElementById('player-pulse-ring');
 
-      // Reset buzzer style states
       buzzerBtn.disabled = false;
       ringEffect.classList.add('hidden');
 
-      // 1. Check if the player has already successfully buzzed in
-      if (hasBuzzed) {
-        banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2";
+      // Check if current user name has already submitted a press
+      const isRecordFound = App.state.buzzes.some(p => p.studentName.trim().toLowerCase() === groupName.trim().toLowerCase());
+      if (isRecordFound) {
+        App.state.hasBuzzed = true;
+      }
+
+      if (App.state.hasBuzzed) {
+        banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-lg flex items-center justify-center gap-2";
         banner.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> ส่งสัญญาณสำเร็จแล้ว! รอคุณครูสรุปคิว`;
-        
+
         buzzerBtn.disabled = true;
         buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-full flex flex-col items-center justify-center text-white border-4 border-amber-300/40 relative z-10 transition-all";
         buzzerText.innerText = "กดแล้ว!";
         buzzerSubtext.innerText = "สัญญาณถูกส่งสำเร็จ";
 
-        // Display exact placement data if verified by live list
         if (App.state.myPlacement) {
           placementBox.classList.remove('hidden');
-          const place = App.state.myPlacement;
-          
+          const p = App.state.myPlacement;
           let awardHTML = '';
-          if (place === 1) {
+
+          if (p === 1) {
             awardHTML = `
               <div class="text-center p-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-indigo-950 rounded-2xl shadow-lg font-bold">
-                <div class="text-4xl mb-1">👑 ยินดีด้วยคุณคืออันดับที่ 1</div>
-                <p class="text-sm">กลุ่มของคุณเร็วที่สุดในห้อง! เตรียมตอบคำถามได้เลย!</p>
+                <div class="text-4xl mb-1">👑 คุณคืออันดับที่ 1</div>
+                <p class="text-sm">กลุ่มของคุณเร็วที่สุดในห้อง! เตรียมตัวตอบคำถามได้เลย</p>
               </div>
             `;
-          } else if (place === 2) {
+          } else if (p === 2) {
             awardHTML = `
               <div class="text-center p-4 bg-gray-100 text-gray-800 rounded-2xl font-bold">
                 <div class="text-3xl mb-1">🥈 อันดับที่ 2</div>
-                <p class="text-sm">คุณเกือบเป็นคนแรกแล้ว! สำรองสิทธิ์ตอบคำถาม</p>
+                <p class="text-sm">เกือบชนะแล้ว! สแตนด์บายตอบสำรองสิทธิ์</p>
               </div>
             `;
           } else {
             awardHTML = `
-              <div class="text-center p-4 bg-orange-50 text-orange-800 border border-orange-200 rounded-2xl font-bold">
-                <div class="text-2xl mb-1">🥉 ลำดับความไวที่ ${place}</div>
-                <p class="text-sm">กดได้รวดเร็วทันใจ! มาร่วมลุ้นรอบถัดไป</p>
+              <div class="text-center p-4 bg-orange-50 text-orange-800 border rounded-2xl font-bold">
+                <div class="text-2xl mb-1">🥉 ความเร็วอันดับที่ ${p}</div>
+                <p class="text-sm">เตรียมตัวให้พร้อมสำหรับคำถามข้อถัดไป!</p>
               </div>
             `;
           }
@@ -808,28 +1018,23 @@
         } else {
           placementBox.classList.add('hidden');
         }
-
       } else {
-        // Clear result box
         placementBox.classList.add('hidden');
 
-        // 2. State when Locked
         if (isLocked) {
           banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-lg flex items-center justify-center gap-2";
           banner.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> กระดิ่งตอบคำถามล็อกอยู่`;
-          
+
           buzzerBtn.disabled = true;
-          buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 rounded-full flex flex-col items-center justify-center text-white border-4 border-gray-400/30 relative z-10 transition-all cursor-not-allowed";
+          buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 rounded-full flex flex-col items-center justify-center text-white border-4 border-gray-400/30 relative z-10 cursor-not-allowed";
           buzzerText.innerText = "ล็อกอยู่";
           buzzerSubtext.innerText = "รอคุณครูปล่อยสัญญาณ...";
-        } 
-        // 3. State when Unlocked (Ready to press!)
-        else {
-          banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2 animate-pulse";
+        } else {
+          banner.className = "w-full p-4 rounded-2xl text-center font-bold text-sm bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 shadow-lg flex items-center justify-center gap-2 animate-pulse";
           banner.innerHTML = `<i data-lucide="unlock" class="w-5 h-5 animate-bounce"></i> ปลดล็อกแล้ว! กดกระดิ่งเร็ว!`;
-          
+
           ringEffect.classList.remove('hidden');
-          
+
           buzzerBtn.disabled = false;
           buzzerBtn.className = "buzzer-btn w-64 h-64 sm:w-72 sm:h-72 bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 hover:from-emerald-400 hover:via-emerald-500 hover:to-teal-400 rounded-full flex flex-col items-center justify-center text-white border-4 border-emerald-300/60 relative z-10 transition-all cursor-pointer active:scale-95";
           buzzerText.innerText = "กดกระดิ่ง!";
@@ -840,107 +1045,122 @@
       lucide.createIcons();
     }
 
-    // 10. Write & Database Mutations
-    // Host Action: Lock/Unlock Toggle
-    async function toggleBuzzerLock() {
-      const currentLocked = App.state.config.isLocked;
-      
+    // 12. Actions Trigger Logic (Lock, Unlocks and Buzzer Pressing)
+    async function handleHostLockToggle() {
+      const isLocked = App.state.config.isLocked;
       try {
-        if (currentLocked) {
-          // Play unlock sound locally
+        if (isLocked) {
           AudioEngine.playSuccessBeep();
-          
-          // Open System
-          await setDoc(App.refs.configDoc, {
+          await DatabaseAdapter.setConfig({
             isLocked: false,
-            unlockedAt: Date.now() // Timestamp to measure player response speed
-          }, { merge: true });
-          
-          showToast("ปลดล็อกกระดิ่งแล้ว! พร้อมรับสัญญาณคำตอบ", "success");
+            unlockedAt: Date.now()
+          });
+          showToast("เปิดปลดล็อกระบบกระดิ่งแล้ว!", "success");
         } else {
-          // Play lock sound locally
           AudioEngine.playLockBuzz();
-          
-          // Close System
-          await setDoc(App.refs.configDoc, {
-            isLocked: true
-          }, { merge: true });
-          
-          showToast("ระบบปิดล็อกกระดิ่งแล้ว", "info");
+          await DatabaseAdapter.setConfig({ isLocked: true });
+          showToast("ปิดล็อกระบบกระดิ่งแล้ว", "info");
         }
       } catch (err) {
-        console.error("Lock toggle error:", err);
-        showToast("ไม่สามารถควบคุมระบบกระดิ่งได้ กรุณาลองอีกครั้ง", "error");
+        console.error(err);
+        showToast("ไม่สามารถปรับแต่งการตั้งค่าระบบได้", "error");
       }
     }
 
-    // Host Action: Reset Session Database
-    async function resetSession() {
-      if (confirm("คุณแน่ใจหรือไม่ว่าต้องการเริ่มรอบใหม่และล้างรายชื่อคิวเดิม?")) {
+    async function handleResetSession() {
+      if (confirm("ล้างลำดับคิวผู้ตอบคำถาม เพื่อเริ่มรอบใหม่ใช่หรือไม่?")) {
         AudioEngine.playLockBuzz();
         const nextSessionId = 'sess_' + Date.now();
-        
         try {
-          // 1. Lock system and trigger a new sessionId token
-          await setDoc(App.refs.configDoc, {
-            isLocked: true,
-            sessionId: nextSessionId,
-            unlockedAt: null
-          });
-          
-          showToast("รีเซ็ตระบบและล้างลำดับเสร็จสิ้น เริ่มกิจกรรมรอบใหม่ได้!", "success");
-        } catch (err) {
-          console.error("Session reset failed:", err);
-          showToast("เกิดข้อผิดพลาดในการล้างระบบ", "error");
+          await DatabaseAdapter.resetSession(nextSessionId);
+          showToast("รีเซ็ตคิวและระบบล็อกสำเร็จ เริ่มเล่นรอบใหม่ได้เลย!", "success");
+        } catch(err) {
+          console.error(err);
+          showToast("ไม่สามารถรีเซ็ตค่าระบบได้", "error");
         }
       }
     }
 
-    // Player Action: Press Big Buzzer
-    async function executePlayerBuzzerPress() {
-      // Guard Check
+    async function handleBuzzerPress() {
       if (App.state.config.isLocked || App.state.hasBuzzed || !App.state.groupName) return;
 
-      // Optimistic Local State Lock
       App.state.hasBuzzed = true;
       AudioEngine.playSuccessBeep();
 
-      // Trigger vibration pattern on supported mobile screens
       if (navigator.vibrate) {
-        navigator.vibrate([120, 80, 120]);
+        navigator.vibrate([100, 50, 100]);
       }
 
       renderPlayerScreen();
 
-      // Ensure Unique Write Constraint to prevent multi-device cheating
-      // Doc ID combines sessionId & groupName. Only one press record can exist per session per group.
-      const groupKey = App.state.groupName.trim().replace(/\s+/g, '_').toLowerCase();
-      const pressDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'buzzer_presses', `${App.state.config.sessionId}_${groupKey}`);
-
       try {
-        await setDoc(pressDocRef, {
+        await DatabaseAdapter.addPress({
           studentName: App.state.groupName.trim(),
           pressedAt: Date.now(),
           sessionId: App.state.config.sessionId
         });
-      } catch (err) {
-        console.error("Buzzer submission error:", err);
-        showToast("ส่งสัญญาณหลุดลอยจากเซิร์ฟเวอร์ กรุณากดใหม่อีกครั้ง!", "error");
-        
-        // Re-enable in case of genuine write error
+      } catch(err) {
+        console.error(err);
+        showToast("เกิดปัญหาระหว่างส่งสัญญาณเข้าเซิร์ฟเวอร์", "error");
         App.state.hasBuzzed = false;
         renderPlayerScreen();
       }
     }
 
-    // 11. Initializer and UI Interactions
-    function initAppListeners() {
-      
-      // Screen 1: Role Selection Routing
+    // 13. UI Setup Events Listeners
+    function setupWizardActions() {
+      const btnDemo = document.getElementById('btn-wizard-demo');
+      const btnShowFirebase = document.getElementById('btn-wizard-show-firebase');
+      const btnCancel = document.getElementById('btn-wizard-cancel');
+      const btnSaveFirebase = document.getElementById('btn-wizard-save-firebase');
+      const firebaseArea = document.getElementById('firebase-input-area');
+
+      btnDemo.addEventListener('click', () => {
+        localStorage.setItem('mode_local_demo', 'true');
+        localStorage.removeItem('custom_firebase_config');
+        showToast("เปิดใช้งานโหมดจำลองในอุปกรณ์นี้เสร็จสิ้น", "success");
+        
+        // Reload system to start demo
+        setTimeout(() => window.location.reload(), 500);
+      });
+
+      btnShowFirebase.addEventListener('click', () => {
+        firebaseArea.classList.remove('hidden');
+      });
+
+      btnCancel.addEventListener('click', () => {
+        firebaseArea.classList.add('hidden');
+      });
+
+      btnSaveFirebase.addEventListener('click', () => {
+        const jsonVal = document.getElementById('input-firebase-config-json').value.trim();
+        if (!jsonVal) {
+          showToast("กรุณากรอกรหัสเชื่อมต่อ JSON จาก Firebase", "error");
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(jsonVal);
+          if (!parsed.apiKey || !parsed.projectId) {
+            showToast("รูปแบบข้อความ JSON ผิดพลาด กรุณาตรวจสอบชุดคีย์", "error");
+            return;
+          }
+
+          localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
+          localStorage.setItem('mode_local_demo', 'false');
+          showToast("บันทึกการเชื่อมต่อเรียบร้อยแล้ว!", "success");
+          
+          setTimeout(() => window.location.reload(), 500);
+        } catch(e) {
+          showToast("ไม่สามารถประมวลผล JSON ได้ กรุณาตรวจสอบไวยากรณ์ (เช่น ปีกกา, ฟันหนู)", "error");
+        }
+      });
+    }
+
+    function setupApplicationListeners() {
+      // General landing
       document.getElementById('btn-select-host').addEventListener('click', () => {
-        // If Host already authorized
-        const isAuth = sessionStorage.getItem('classroom_host_authorized');
-        if (isAuth === 'true') {
+        if (sessionStorage.getItem('classroom_host_authorized') === 'true') {
           navigate('host');
         } else {
           navigate('host-auth');
@@ -951,89 +1171,86 @@
         navigate('player-setup');
       });
 
-      // Screen 2: Host Authentication Code Checking
+      // Host Auth
       document.getElementById('btn-host-auth-back').addEventListener('click', () => navigate('landing'));
-      document.getElementById('btn-host-auth-submit').addEventListener('click', verifyHostAuth);
-      document.getElementById('input-host-pin').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') verifyHostAuth();
-      });
-
-      function verifyHostAuth() {
+      document.getElementById('btn-host-auth-submit').addEventListener('click', () => {
         const pin = document.getElementById('input-host-pin').value;
         if (pin === '1234') {
           sessionStorage.setItem('classroom_host_authorized', 'true');
-          showToast("ยืนยันสิทธิ์ Host สำเร็จ ยินดีต้อนรับคุณครู!", "success");
+          showToast("เข้าสู่ระบบ Host สำเร็จ ยินดีต้อนรับคุณครู!", "success");
           navigate('host');
         } else {
-          showToast("รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสเริ่มต้นในคู่มือ", "error");
-          AudioEngine.playLockBuzz();
+          showToast("รหัส PIN ผิดพลาด กรุณาลองใหม่อีกครั้ง", "error");
         }
-      }
+      });
+      document.getElementById('input-host-pin').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('btn-host-auth-submit').click();
+        }
+      });
 
-      // Screen 3: Host Dashboard Controls
-      document.getElementById('btn-host-toggle-lock').addEventListener('click', toggleBuzzerLock);
-      document.getElementById('btn-host-reset').addEventListener('click', resetSession);
+      // Host Screen Controls
+      document.getElementById('btn-host-toggle-lock').addEventListener('click', handleHostLockToggle);
+      document.getElementById('btn-host-quick-unlock').addEventListener('click', () => {
+        if (App.state.config.isLocked) handleHostLockToggle();
+      });
+      document.getElementById('btn-host-quick-lock').addEventListener('click', () => {
+        if (!App.state.config.isLocked) handleHostLockToggle();
+      });
+      document.getElementById('btn-host-reset').addEventListener('click', handleResetSession);
       
-      // Quick host buttons
-      document.getElementById('btn-host-quick-unlock').addEventListener('click', async () => {
-        if (App.state.config.isLocked) await toggleBuzzerLock();
-      });
-      document.getElementById('btn-host-quick-lock').addEventListener('click', async () => {
-        if (!App.state.config.isLocked) await toggleBuzzerLock();
-      });
-
       document.getElementById('btn-host-logout').addEventListener('click', () => {
-        if (confirm("ต้องการออกจากหน้าจอผู้ควบคุมหรือไม่?")) {
+        if (confirm("ต้องการออกจากหน้าควบคุมคุณครูหรือไม่?")) {
           sessionStorage.removeItem('classroom_host_authorized');
           navigate('landing');
         }
       });
 
-      // Screen 4: Player Configuration Register
+      // Player Setup
       document.getElementById('btn-player-setup-back').addEventListener('click', () => navigate('landing'));
       document.getElementById('btn-player-setup-submit').addEventListener('click', () => {
         const nameVal = document.getElementById('input-player-group-name').value.trim();
         if (!nameVal) {
-          showToast("กรุณากรอกชื่อกลุ่มหรือชื่อผู้เล่นก่อนร่วมทีม", "error");
+          showToast("กรุณากรอกชื่อกลุ่มหรือชื่อของกลุ่มนักเรียน", "error");
           return;
         }
         App.state.groupName = nameVal;
         localStorage.setItem('buzzer_group_name', nameVal);
-        showToast(`เชื่อมต่อเข้ากลุ่ม "${nameVal}" แล้ว`, "success");
+        showToast(`ยินดีต้อนรับ กลุ่ม "${nameVal}"`, "success");
         navigate('player');
       });
 
-      // Screen 5: Active Player Panel
+      // Player Actions
       document.getElementById('btn-player-exit').addEventListener('click', () => {
-        if (confirm("ต้องการออกจากกลุ่มผู้เล่นเพื่อเข้าร่วมใหม่ด้วยชื่ออื่นหรือไม่?")) {
+        if (confirm("ต้องการลงทะเบียนกลุ่มใหม่ใช่หรือไม่?")) {
           navigate('player-setup');
         }
       });
 
-      // The Massive Buzzer Trigger button
-      const buzzerNode = document.getElementById('btn-student-buzzer');
-      // Supports clicks, swipes, and fast responsive touch interactions
-      buzzerNode.addEventListener('mousedown', (e) => {
+      const buzzerBtnNode = document.getElementById('btn-student-buzzer');
+      buzzerBtnNode.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        executePlayerBuzzerPress();
+        handleBuzzerPress();
       });
-      buzzerNode.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // prevents dual trigger click emulation delay on mobile
-        executePlayerBuzzerPress();
+      buzzerBtnNode.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleBuzzerPress();
       });
 
+      // Header Settings Button
+      document.getElementById('btn-open-settings').addEventListener('click', () => {
+        if (confirm("คุณครูต้องการปรับปรุงค่าการเชื่อมต่อของระบบใช่หรือไม่?")) {
+          openSetupWizard();
+        }
+      });
     }
 
-    // 12. Run Application On DOM Ready
+    // 14. Entry Execution
     window.addEventListener('DOMContentLoaded', async () => {
-      // Initialize layout icons
       lucide.createIcons();
-      
-      // Bind elements event controllers
-      initAppListeners();
-
-      // Trigger Firebase custom token connection routines
-      await startAuth();
+      setupWizardActions();
+      setupApplicationListeners();
+      await initConnection();
     });
 
   </script>
